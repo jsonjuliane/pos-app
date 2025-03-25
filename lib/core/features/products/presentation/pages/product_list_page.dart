@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/product.dart';
+import '../widgets/order_summary_panel.dart';
 import '../widgets/product_card.dart';
 
 /// Temporary list of mock products.
@@ -67,14 +68,11 @@ class ProductListPage extends StatelessWidget {
                 ),
               ),
 
-              // Order Summary (Right Panel - to be added next)
+              // Order Summary
               Expanded(
                 flex: 3,
-                child: Container(
-                  color: Colors.grey.shade100,
-                  child: const Center(
-                    child: Text('🧾 Order Summary Panel (Coming Next)'),
-                  ),
+                child: OrderSummaryPanel(
+                  selectedItems: mockProducts.where((p) => p.selectedCount > 0).toList(),
                 ),
               ),
             ],
