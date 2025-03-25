@@ -19,25 +19,15 @@ class Product {
   /// Category of the product (used for filtering)
   final String category;
 
-  /// The currently selected count for this product
-  /// This is mutable only for in-memory UI use.
-  /// We'll manage this state via Riverpod or widget-local state.
-  final int selectedCount;
+  /// Base price of the product
+  final double price;
 
   const Product({
     required this.id,
     required this.name,
     required this.imagePath,
     required this.category,
-    this.selectedCount = 0,
+    required this.price,
   });
 
-  /// Returns a new Product with updated selectedCount.
-  Product copyWithCount(int newCount) => Product(
-    id: id,
-    name: name,
-    imagePath: imagePath,
-    category: category,
-    selectedCount: newCount,
-  );
 }

@@ -1,32 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../cart/data/models/cart_item.dart';
+import '../../../cart/data/providers/cart_providers.dart';
 import '../../data/models/product.dart';
 
-/// Product card with:
-/// - Single tap to add 1
-/// - Long press to remove 1
-class ProductCard extends StatefulWidget {
+/// A product card that:
+/// - Adds product to cart on tap
+/// - Removes one from cart on long press
+class ProductCard extends ConsumerWidget {
   final Product product;
 
   const ProductCard({super.key, required this.product});
 
   @override
-  State<ProductCard> createState() => _ProductCardState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(cartProvider);
+    final cartItem = cart.firstWhere(
+          (item) => item.product.id == product.id,
+      orElse: () => CartItem(product: product, quantity: 0),
+    );
 
-class _ProductCardState extends State<ProductCard> {
-  int _count = 0;
-
-  void _increment() => setState(() => _count++);
-
-  void _decrement() {
-    if (_count > 0) setState(() => _count--);
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _increment,
-      onLongPress: _decrement,
+      onTap: () => ref.read(cartProvider.notifier).add(product),
+      onLongPress: () => ref.read(cartProvider.notifier).remove(product),
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -36,25 +32,36 @@ class _ProductCardState extends State<ProductCard> {
             children: [
               Expanded(
                 child: Image.asset(
-                  widget.product.imagePath,
+                  product.imagePath,
                   fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                widget.product.name,
+                product.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
+              Text(
+                '₱${product.price.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
               const SizedBox(height: 12),
               Text(
-                _count > 0 ? 'In cart: $_count' : 'Tap to add • Long press to remove',
+                cartItem.quantity > 0
+                    ? 'In cart: ${cartItem.quantity}'
+                    : 'Tap to add • Long press to remove',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: _count > 0 ? Theme.of(context).primaryColor : Colors.grey,
+                  color: cartItem.quantity > 0
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey,
                 ),
               ),
             ],
