@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "juliane.sjon" "\0"
+            VALUE "CompanyName", "juliane.json" "\0"
             VALUE "FileDescription", "pos_app" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "pos_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 juliane.sjon. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 juliane.json. All rights reserved." "\0"
             VALUE "OriginalFilename", "pos_app.exe" "\0"
             VALUE "ProductName", "pos_app" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
