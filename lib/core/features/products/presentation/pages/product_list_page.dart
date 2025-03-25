@@ -109,10 +109,10 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
 
     // Apply category filter to product list
     final filteredProducts =
-        selectedCategory == 'all'
+        selectedCategory.toLowerCase() == 'all'
             ? mockProducts
             : mockProducts
-                .where((p) => p.category.toLowerCase() == selectedCategory)
+                .where((p) => p.category.toLowerCase() == selectedCategory.toLowerCase())
                 .toList();
 
     return Scaffold(
@@ -128,7 +128,7 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          const CategorySelector(),
+                          CategorySelector(products: mockProducts),
                           const SizedBox(height: 12),
                           Expanded(
                             child: ProductGrid(
