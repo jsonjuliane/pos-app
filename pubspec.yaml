@@ -11,11 +11,20 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Core libraries
   flutter_riverpod: ^2.5.1     # Scalable state management (preferred over Provider)
   go_router: ^13.0.0           # Declarative navigation and deep linking
+
+  # Offline storage
   hive: ^2.2.3                 # Fast NoSQL storage for offline use
   hive_flutter: ^1.1.0         # Hive extensions for Flutter integration
   path_provider: ^2.1.1        # Access device file system paths
+
+  # Firebase / Firestore
+  firebase_core: ^2.25.4       # Required for initializing Firebase
+  cloud_firestore: ^4.14.0     # Access Firestore (remote DB)
+
+  # UI
   cupertino_icons: ^1.0.8      # iOS-style icons
 
 dev_dependencies:
