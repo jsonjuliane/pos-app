@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/routing/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 
 /// Root widget of the POS app.
@@ -13,13 +14,9 @@ class POSApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'POS App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // Material 3 design system
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-
-        // Custom global text theme can be added here later
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system, // Automatically switch based on system setting
       // Connects go_router navigation to the app
       routerConfig: AppRouter.router,
     );
