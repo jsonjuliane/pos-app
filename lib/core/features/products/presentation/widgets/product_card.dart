@@ -7,6 +7,7 @@ import '../../data/models/product.dart';
 /// A product card that:
 /// - Adds product to cart on tap
 /// - Removes one from cart on long press
+/// - Shows fallback image if `imageUrl` is empty
 class ProductCard extends ConsumerWidget {
   final Product product;
 
@@ -20,6 +21,9 @@ class ProductCard extends ConsumerWidget {
       orElse: () => CartItem(product: product, quantity: 0),
     );
 
+    final hasImage = product.imageUrl.isNotEmpty;
+    final defaultImage = 'assets/images/special_wow_seafood.jpg';
+
     return GestureDetector(
       onTap: () => ref.read(cartProvider.notifier).add(product),
       onLongPress: () => ref.read(cartProvider.notifier).remove(product),
@@ -30,13 +34,15 @@ class ProductCard extends ConsumerWidget {
           padding: const EdgeInsets.all(12.0),
           child: Column(
             children: [
+              // Image section (asset or network fallback)
               Expanded(
-                child: Image.asset(
-                  product.imagePath,
-                  fit: BoxFit.contain,
-                ),
+                child: hasImage
+                    ? Image.network(product.imageUrl, fit: BoxFit.contain)
+                    : Image.asset(defaultImage, fit: BoxFit.contain),
               ),
               const SizedBox(height: 8),
+
+              // Product name
               Text(
                 product.name,
                 style: const TextStyle(
@@ -44,6 +50,8 @@ class ProductCard extends ConsumerWidget {
                   fontSize: 16,
                 ),
               ),
+
+              // Price display
               Text(
                 '₱${product.price.toStringAsFixed(2)}',
                 style: const TextStyle(
@@ -52,6 +60,8 @@ class ProductCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Cart quantity display
               Text(
                 cartItem.quantity > 0
                     ? 'In cart: ${cartItem.quantity}'

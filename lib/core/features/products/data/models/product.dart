@@ -1,33 +1,65 @@
-import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Represents a product that can be shown on the product grid
-/// and added to an order.
-///
-/// This is a temporary in-memory model for UI logic only.
-/// It may later be converted into a Hive or API-backed model.
-@immutable
+/// Represents a product stored in Firestore.
 class Product {
-  /// Unique identifier for this product
+  /// Firestore document ID (used as unique key in app)
   final String id;
 
   /// Display name of the product
   final String name;
 
-  /// Local asset image path or network URL (for now we'll use local)
-  final String imagePath;
+  /// Price per unit
+  final double price;
 
-  /// Category of the product (used for filtering)
+  /// Category used for filtering (e.g., 'Snack', 'Platter')
   final String category;
 
-  /// Base price of the product
-  final double price;
+  /// Number of items available in stock
+  final int stockCount;
+
+  /// Whether this product is available for ordering
+  final bool inStock;
+
+  /// Image URL of the product (can be local or hosted)
+  final String imageUrl;
+
+  /// Optional product description
+  final String description;
+
+  /// Date/time the product was added to Firestore
+  final DateTime createdAt;
+
+  /// Last updated timestamp
+  final DateTime updatedAt;
 
   const Product({
     required this.id,
     required this.name,
-    required this.imagePath,
-    required this.category,
     required this.price,
+    required this.category,
+    required this.stockCount,
+    required this.inStock,
+    required this.imageUrl,
+    required this.description,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
+  /// Creates a Product object from a Firestore document.
+  factory Product.fromDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+
+    return Product(
+      id: doc.id,
+      name: data['name'] ?? '',
+      price: (data['price'] ?? 0).toDouble(),
+      category: data['category'] ?? '',
+      stockCount: data['stockCount'] ?? 0,
+      inStock: data['inStock'] ?? false,
+      imageUrl: data['imageUrl'] ?? '',
+      description: data['description'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+    );
+  }
 }
