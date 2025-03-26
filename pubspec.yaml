@@ -23,6 +23,7 @@ dependencies:
   # Firebase / Firestore
   firebase_core: ^2.25.4       # Required for initializing Firebase
   cloud_firestore: ^4.14.0     # Access Firestore (remote DB)
+  firebase_auth: ^4.17.8       # Required for authentication through Firebase
 
   # UI
   cupertino_icons: ^1.0.8      # iOS-style icons
