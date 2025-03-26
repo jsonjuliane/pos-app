@@ -9,7 +9,11 @@ class LoginPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final themeMode = ref.watch(themeModeProvider);
+    final platformBrightness = MediaQuery.of(context).platformBrightness;
+
+    final isDark = themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system && platformBrightness == Brightness.dark);
 
     return Scaffold(
       resizeToAvoidBottomInset: true, // ✅ Prevent keyboard overflow
@@ -19,8 +23,11 @@ class LoginPage extends ConsumerWidget {
           IconButton(
             tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
-          ),
+            onPressed: () {
+              final brightness = MediaQuery.of(context).platformBrightness;
+              ref.read(themeModeProvider.notifier).toggle(brightness);
+            },
+          )
         ],
       ),
       body: SafeArea(

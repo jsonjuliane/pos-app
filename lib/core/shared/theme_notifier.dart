@@ -7,10 +7,13 @@ final themeModeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) 
 });
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
-  ThemeNotifier() : super(ThemeMode.system); // Or ThemeMode.light/dark as default
+  ThemeNotifier() : super(ThemeMode.system);
 
-  void toggle() {
-    state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  void toggle(Brightness platformBrightness) {
+    final isDark = state == ThemeMode.dark ||
+        (state == ThemeMode.system && platformBrightness == Brightness.dark);
+
+    state = isDark ? ThemeMode.light : ThemeMode.dark;
   }
 
   void set(ThemeMode mode) {
