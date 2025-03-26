@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/core/utils/string_extensions.dart';
 
 import '../../data/models/product.dart';
-import '../../data/providers/category_provider.dart';
+import '../providers/selected_category_provider.dart';
 
 /// Builds a scrollable list of category chips based on products.
 class CategorySelector extends ConsumerWidget {

@@ -19,7 +19,7 @@ class CartItem {
   CartItem copyWithQuantity(int newQuantity) {
     return CartItem(
       product: product,
-      quantity: newQuantity,
+      quantity: newQuantity.clamp(0, double.infinity).toInt(),
     );
   }
 

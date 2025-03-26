@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../cart/data/providers/cart_providers.dart';
+import '../../../cart/presentation/providers/cart_providers.dart';
 import '../../data/models/product.dart';
-import '../../data/providers/category_provider.dart';
-import '../../data/providers/product_provider.dart';
+import '../providers/selected_category_provider.dart';
+import '../providers/product_providers.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/order_summary_panel.dart';
 import '../widgets/product_card.dart';

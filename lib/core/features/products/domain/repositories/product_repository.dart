@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/product.dart';
+
+import '../../data/models/product.dart';
 
 /// Responsible for interacting with the Firestore `products` collection.
 class ProductRepository {
