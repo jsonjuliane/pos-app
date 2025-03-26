@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../cart/data/models/cart_item.dart';
-import '../../../cart/presentation/providers/cart_providers.dart';
+import '../../data/models/cart_item.dart';
+import '../providers/cart_providers.dart';
 
 /// Refined order summary panel for desktop/tablet POS.
 /// Shows items with clean layout and a fixed footer.

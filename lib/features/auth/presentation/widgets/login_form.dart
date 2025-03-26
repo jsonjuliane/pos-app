@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../shared/primary_button.dart';
+import '../../../../shared/utils/error_handler.dart';
+import '../../../../shared/widgets/primary_button.dart';
 import '../providers/login_providers.dart';
-import '../../../../utils/error_handler.dart';
 import 'email_field.dart';
 import 'password_field.dart';
 import 'forgot_password_dialog.dart';

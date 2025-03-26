@@ -6,7 +6,7 @@ import '../../data/models/product.dart';
 import '../providers/selected_category_provider.dart';
 import '../providers/product_providers.dart';
 import '../widgets/category_selector.dart';
-import '../widgets/order_summary_panel.dart';
+import '../../../cart/presentation/widgets/order_summary_panel.dart';
 import '../widgets/product_card.dart';
 
 /// Main product list page for wide layouts (tablet, desktop, web).

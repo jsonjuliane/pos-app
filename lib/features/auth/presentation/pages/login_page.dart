@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/theme_notifier.dart';
+import '../../../../shared/providers/theme_mode_provider.dart';
 import '../widgets/login_form.dart';
 
 class LoginPage extends ConsumerWidget {

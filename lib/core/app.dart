@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/routing/app_router.dart';
-import 'core/shared/theme_notifier.dart';
-import 'core/theme/app_theme.dart';
+import '../shared/providers/theme_mode_provider.dart';
+import 'routing/app_router.dart';
+import 'theme/app_theme.dart';
 
 /// Root widget of the POS app.
 /// Sets the global theme and attaches the router configuration.

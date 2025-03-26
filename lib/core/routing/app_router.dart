@@ -2,10 +2,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/auth/presentation/pages/login_page.dart';
-import '../features/products/presentation/pages/product_list_page.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/products/presentation/pages/product_list_page.dart';
 import 'go_router_refresh_stream.dart';
-
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -32,6 +31,8 @@ class AppRouter {
         builder: (context, state) => const ProductListPage(),
       ),
     ],
-    refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
+    refreshListenable: GoRouterRefreshStream(
+      FirebaseAuth.instance.authStateChanges(),
+    ),
   );
 }
