@@ -12,6 +12,7 @@ class LoginPage extends ConsumerWidget {
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true, // ✅ Prevent keyboard overflow
       appBar: AppBar(
         elevation: 0,
         actions: [
@@ -22,23 +23,25 @@ class LoginPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Padding(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Login to POS',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Login to POS',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                const LoginForm(),
-              ],
+                  const SizedBox(height: 24),
+                  const LoginForm(),
+                ],
+              ),
             ),
           ),
         ),
