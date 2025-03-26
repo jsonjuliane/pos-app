@@ -1,11 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../repository/product_repository.dart';
-import '../models/product.dart';
+import '../../data/models/product.dart';
+import '../../data/providers/product_repo_providers.dart';
 
-final productRepoProvider = Provider<ProductRepository>((ref) {
-  return ProductRepository();
-});
-
+/// Provides the live list of products to the UI as a stream.
 final productListProvider = StreamProvider<List<Product>>((ref) {
   final repo = ref.read(productRepoProvider);
   return repo.getProducts();

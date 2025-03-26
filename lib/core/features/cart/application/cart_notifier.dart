@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/cart_item.dart';
-import '../../../products/data/models/product.dart';
+import '../data/models/cart_item.dart';
+import '../../products/data/models/product.dart';
 
 /// Manages the cart state globally using a list of [CartItem].
 /// Allows adding, removing, and clearing items from the cart.
