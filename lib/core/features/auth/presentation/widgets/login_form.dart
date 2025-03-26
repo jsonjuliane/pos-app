@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/login_providers.dart';
 import '../../../../utils/error_handler.dart';
 import 'email_field.dart';
@@ -27,9 +28,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     final state = ref.read(loginControllerProvider);
 
     if (state is AsyncError) {
+      if (!mounted) return;
       setState(() {
         _error = mapFirebaseAuthError(state.error.toString());
       });
+    } else if (state is AsyncData && state.value != null) {
+      if (!mounted) return;
+      context.goNamed('dashboard');
     }
   }
 

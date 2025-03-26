@@ -17,7 +17,7 @@ class AppRouter {
 
       // 🛒 Dashboard (Product List Page)
       GoRoute(
-        path: '/',
+        path: '/dashboard',
         name: 'dashboard',
         builder: (context, state) => const ProductListPage(),
       ),
