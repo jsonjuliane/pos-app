@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../presentation/providers/auth_providers.dart';
+import '../data/providers/auth_providers.dart';
 
 /// A StateNotifier that manages login state and loading/error handling.
 class LoginController extends StateNotifier<AsyncValue<User?>> {
