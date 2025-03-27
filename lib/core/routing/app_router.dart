@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/products/presentation/pages/product_list_page.dart';
+import '../../features/users/presentation/pages/user_management_page.dart';
 import 'go_router_refresh_stream.dart';
 
 class AppRouter {
@@ -29,6 +30,11 @@ class AppRouter {
         path: '/dashboard',
         name: 'dashboard',
         builder: (context, state) => const ProductListPage(),
+      ),
+      GoRoute(
+        path: '/users',
+        name: 'user-management',
+        builder: (context, state) => const UserManagementPage(),
       ),
     ],
     refreshListenable: GoRouterRefreshStream(

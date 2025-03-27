@@ -20,3 +20,11 @@ String mapFirebaseAuthError(String? codeOrMessage) {
       return codeOrMessage ?? 'Authentication failed. Please try again.';
   }
 }
+
+  String mapFirestoreError(Object? error) {
+  final raw = error.toString();
+  if (raw.contains('permission-denied')) return 'You don’t have permission to do this.';
+  if (raw.contains('not-found')) return 'Requested data not found.';
+  if (raw.contains('unavailable')) return 'Service temporarily unavailable.';
+  return 'Unexpected error. Please try again.';
+}
