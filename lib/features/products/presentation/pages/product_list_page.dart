@@ -64,7 +64,13 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       );
     }
 
-    final user = authUserAsync.value!;
+    final user = authUserAsync.value;
+    if (user == null) {
+      // This can happen during logout or before redirect
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     final cartItems = ref.watch(cartProvider);
 
     return Scaffold(
@@ -210,28 +216,48 @@ class _NavigationRail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentRoute = GoRouterState.of(context).matchedLocation;
+
+    // Build list of destinations dynamically
+    final destinations = <NavigationRailDestination>[
+      const NavigationRailDestination(
+        icon: Icon(Icons.shopping_cart),
+        label: Text('Products'),
+      ),
+      if (user.role == 'owner' || user.role == 'admin')
+        const NavigationRailDestination(
+          icon: Icon(Icons.supervised_user_circle),
+          label: Text('User'),
+        ),
+      const NavigationRailDestination(
+        icon: Icon(Icons.logout),
+        label: Text('Logout'),
+      ),
+    ];
+
+    // Determine selectedIndex based on current route
+    int selectedIndex;
+    if (currentRoute == '/dashboard') {
+      selectedIndex = 0;
+    } else if (currentRoute == '/user-management') {
+      selectedIndex = 1;
+    } else {
+      selectedIndex = -1; // Nothing selected
+    }
+
     return NavigationRail(
-      selectedIndex: 0,
+      selectedIndex: selectedIndex,
       labelType: NavigationRailLabelType.all,
-      destinations: [
-        const NavigationRailDestination(
-          icon: Icon(Icons.shopping_cart),
-          label: Text('Products'),
-        ),
-        if (user.role == 'owner' || user.role == 'admin')
-          const NavigationRailDestination(
-            icon: Icon(Icons.supervised_user_circle),
-            label: Text('User Management'),
-          ),
-        const NavigationRailDestination(
-          icon: Icon(Icons.logout),
-          label: Text('Logout'),
-        ),
-      ],
+      destinations: destinations,
       onDestinationSelected: (index) async {
-        if (index == 1 && (user.role == 'owner' || user.role == 'admin')) {
+        final isAdminOrOwner = user.role == 'owner' || user.role == 'admin';
+
+        // Adjust index based on destination count
+        if (index == 0) {
+          context.goNamed('dashboard');
+        } else if (index == 1 && isAdminOrOwner) {
           context.goNamed('user-management');
-        } else if (index == 2) {
+        } else if ((index == 1 && !isAdminOrOwner) || index == 2) {
           await showLogoutDialog(context, ref);
         }
       },
@@ -261,7 +287,7 @@ class _AppDrawer extends StatelessWidget {
           if (user.role == 'owner' || user.role == 'admin')
             ListTile(
               leading: const Icon(Icons.supervised_user_circle),
-              title: const Text('User Management'),
+              title: const Text('User'),
               onTap: () => context.goNamed('user-management'),
             ),
           ListTile(
