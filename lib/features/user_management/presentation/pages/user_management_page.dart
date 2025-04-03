@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_app/features/user_management/data/providers/branch_provider.dart';
 
 import '../../../auth/data/models/app_user.dart';
-import '../../data/providers/branch_name_provider.dart';
 import '../../data/providers/user_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
 import '../widgets/set_temporary_password.dart';
@@ -28,9 +28,10 @@ class UserManagementPage extends ConsumerWidget {
                 child: _SearchAndFilterBar(),
               ),
               Expanded(
-                child: isWide
-                    ? _UserDataTable(users: users)
-                    : _UserListView(users: users),
+                child:
+                    isWide
+                        ? _UserDataTable(users: users)
+                        : _UserListView(users: users),
               ),
             ],
           );
@@ -134,14 +135,14 @@ class _UserListView extends StatelessWidget {
 
 class _UserDataTable extends ConsumerWidget {
   final List<AppUser> users;
+
   const _UserDataTable({required this.users});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final branchNames = ref.watch(branchNamesProvider).maybeWhen(
-      data: (map) => map,
-      orElse: () => {},
-    );
+    final branchNames = ref
+        .watch(branchNamesProvider)
+        .maybeWhen(data: (map) => map, orElse: () => {});
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -156,60 +157,70 @@ class _UserDataTable extends ConsumerWidget {
           DataColumn(label: Text('Status')),
           DataColumn(label: Text('Actions')),
         ],
-        rows: users.map((user) {
-          final branchName = branchNames[user.branchId] ?? '-';
+        rows:
+            users.map((user) {
+              final branchName = branchNames[user.branchId] ?? '-';
 
-          return DataRow(cells: [
-            DataCell(Text(user.name)),
-            DataCell(Text(user.email)),
-            DataCell(Text(user.role)),
-            DataCell(Text(branchName)),
-            DataCell(Text(user.disabled ? 'Disabled' : 'Active')),
-            DataCell(Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.swap_horiz),
-                  tooltip: 'Assign Branch',
-                  onPressed: user.role == 'owner'
-                      ? null
-                      : () async {
-                    await showDialog(
-                      context: context,
-                      builder: (_) => AssignBranchDialog(user: user),
-                    );
-                  },
-                  color: user.role == 'owner' ? Colors.grey : null, // Gray out for owner
-                ),
-                IconButton(
-                  icon: const Icon(Icons.lock_reset),
-                  tooltip: 'Set Temp Password',
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => SetTempPasswordDialog(user: user),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    user.disabled ? Icons.toggle_off : Icons.toggle_on,
+              return DataRow(
+                cells: [
+                  DataCell(Text(user.name)),
+                  DataCell(Text(user.email)),
+                  DataCell(Text(user.role)),
+                  DataCell(Text(branchName)),
+                  DataCell(Text(user.disabled ? 'Disabled' : 'Active')),
+                  DataCell(
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.swap_horiz),
+                          tooltip: 'Assign Branch',
+                          onPressed:
+                              user.role == 'owner'
+                                  ? null
+                                  : () async {
+                                    await showDialog(
+                                      context: context,
+                                      builder:
+                                          (_) => AssignBranchDialog(user: user),
+                                    );
+                                  },
+                          color:
+                              user.role == 'owner'
+                                  ? Colors.grey
+                                  : null, // Gray out for owner
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.lock_reset),
+                          tooltip: 'Set Temp Password',
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => SetTempPasswordDialog(user: user),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            user.disabled ? Icons.toggle_off : Icons.toggle_on,
+                          ),
+                          tooltip: user.disabled ? 'Enable' : 'Disable',
+                          onPressed: () {
+                            // Toggle disabled
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          tooltip: 'Delete',
+                          onPressed: () {
+                            // Delete user
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                  tooltip: user.disabled ? 'Enable' : 'Disable',
-                  onPressed: () {
-                    // Toggle disabled
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  tooltip: 'Delete',
-                  onPressed: () {
-                    // Delete user
-                  },
-                ),
-              ],
-            )),
-          ]);
-        }).toList(),
+                ],
+              );
+            }).toList(),
       ),
     );
   }
@@ -227,10 +238,7 @@ class _UserActionSheet extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         shrinkWrap: true,
         children: [
-          Text(
-            user.email,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(user.email, style: Theme.of(context).textTheme.titleLarge),
           const Divider(height: 24),
           ListTile(
             leading: const Icon(Icons.swap_horiz),
