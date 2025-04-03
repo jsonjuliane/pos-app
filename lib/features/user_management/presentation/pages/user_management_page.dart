@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/data/models/app_user.dart';
 import '../../data/providers/branch_name_provider.dart';
 import '../../data/providers/user_provider.dart';
+import '../widgets/assign_branch_dialog.dart';
 
 class UserManagementPage extends ConsumerWidget {
   const UserManagementPage({super.key});
@@ -147,6 +148,7 @@ class _UserDataTable extends ConsumerWidget {
       child: DataTable(
         columnSpacing: 24,
         columns: const [
+          DataColumn(label: Text('Name')),
           DataColumn(label: Text('Email')),
           DataColumn(label: Text('Role')),
           DataColumn(label: Text('Branch')),
@@ -157,6 +159,7 @@ class _UserDataTable extends ConsumerWidget {
           final branchName = branchNames[user.branchId] ?? '-';
 
           return DataRow(cells: [
+            DataCell(Text(user.name)),
             DataCell(Text(user.email)),
             DataCell(Text(user.role)),
             DataCell(Text(branchName)),
@@ -166,8 +169,11 @@ class _UserDataTable extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.swap_horiz),
                   tooltip: 'Assign Branch',
-                  onPressed: () {
-                    // Assign Branch
+                  onPressed: () async {
+                    await showDialog(
+                      context: context,
+                      builder: (_) => AssignBranchDialog(user: user),
+                    );
                   },
                 ),
                 IconButton(
