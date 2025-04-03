@@ -7,7 +7,7 @@ class UserRepository {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
 
   // Fetch all users, excluding the current user and applying role-based filtering
-  Stream<List<AppUser>> getAllUsers(String currentUserRole) {
+  Stream<List<AppUser>> getAllUsers() {
     final usersRef = _firebaseFirestore.collection('users');
 
     // Apply the role-based filter: exclude 'owner'
