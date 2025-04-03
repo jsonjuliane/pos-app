@@ -5,6 +5,7 @@ import '../../../auth/data/models/app_user.dart';
 import '../../data/providers/branch_name_provider.dart';
 import '../../data/providers/user_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
+import '../widgets/set_temporary_password.dart';
 
 class UserManagementPage extends ConsumerWidget {
   const UserManagementPage({super.key});
@@ -180,7 +181,10 @@ class _UserDataTable extends ConsumerWidget {
                   icon: const Icon(Icons.lock_reset),
                   tooltip: 'Set Temp Password',
                   onPressed: () {
-                    // Set temp password
+                    showDialog(
+                      context: context,
+                      builder: (_) => SetTempPasswordDialog(user: user),
+                    );
                   },
                 ),
                 IconButton(

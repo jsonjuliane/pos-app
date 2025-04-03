@@ -17,14 +17,14 @@ final allUsersProvider = StreamProvider.autoDispose<List<AppUser>>((ref) {
     query = query.where('role', isNotEqualTo: 'owner');
   }
 
-  return query.snapshots().map(
-    (snapshot) =>
-        snapshot.docs
-            .map(
-              (doc) => AppUser.fromDoc(
-                doc as QueryDocumentSnapshot<Map<String, dynamic>>,
-              ),
-            )
-            .toList(),
-  );
+  return query.snapshots().map((snapshot) {
+    return snapshot.docs
+        .map(
+          (doc) => AppUser.fromDoc(
+            doc as QueryDocumentSnapshot<Map<String, dynamic>>,
+          ),
+        )
+        .where((user) => user.uid != authUser.uid) // Exclude the current user
+        .toList();
+  });
 });
