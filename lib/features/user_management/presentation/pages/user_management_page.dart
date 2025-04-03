@@ -170,12 +170,15 @@ class _UserDataTable extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.swap_horiz),
                   tooltip: 'Assign Branch',
-                  onPressed: () async {
+                  onPressed: user.role == 'owner'
+                      ? null
+                      : () async {
                     await showDialog(
                       context: context,
                       builder: (_) => AssignBranchDialog(user: user),
                     );
                   },
+                  color: user.role == 'owner' ? Colors.grey : null, // Gray out for owner
                 ),
                 IconButton(
                   icon: const Icon(Icons.lock_reset),
