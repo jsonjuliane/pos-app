@@ -22,4 +22,29 @@ class UserRepository {
           .toList();
     });
   }
+
+  // Fetch a single user by userId
+  Future<AppUser?> getUserById(String userId) async {
+    try {
+      final docSnapshot = await _firebaseFirestore.collection('users').doc(userId).get();
+      if (docSnapshot.exists) {
+        return AppUser.fromDoc(docSnapshot);
+      } else {
+        return null; // Return null if user doesn't exist
+      }
+    } catch (e) {
+      throw Exception('Error fetching user: $e');
+    }
+  }
+
+  // Toggle the user's status (disabled/enabled)
+  Future<void> toggleUserStatus(String userId, bool currentStatus) async {
+    try {
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(userId);
+      await userDoc.update({'disabled': !currentStatus});
+    } catch (e) {
+      throw Exception('Failed to toggle user status: $e');
+    }
+  }
+
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/features/user_management/data/providers/branch_provider.dart';
 
+import '../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/data/models/app_user.dart';
 import '../../data/providers/user_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
@@ -133,16 +134,26 @@ class _UserListView extends StatelessWidget {
   }
 }
 
-class _UserDataTable extends ConsumerWidget {
+class _UserDataTable extends ConsumerStatefulWidget {
   final List<AppUser> users;
-
   const _UserDataTable({required this.users});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final branchNames = ref
-        .watch(branchNamesProvider)
-        .maybeWhen(data: (map) => map, orElse: () => {});
+  _UserDataTableState createState() => _UserDataTableState();
+}
+
+class _UserDataTableState extends ConsumerState<_UserDataTable> {
+  // A map to store the toggling state for each user (by UID)
+  Map<String, bool> _isTogglingMap = {};
+
+  String? _errorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final branchNames = ref.watch(branchNamesProvider).maybeWhen(
+      data: (map) => map,
+      orElse: () => {},
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -157,70 +168,87 @@ class _UserDataTable extends ConsumerWidget {
           DataColumn(label: Text('Status')),
           DataColumn(label: Text('Actions')),
         ],
-        rows:
-            users.map((user) {
-              final branchName = branchNames[user.branchId] ?? '-';
+        rows: widget.users.map((user) {
+          final branchName = branchNames[user.branchId] ?? '-';
+          bool isToggling = _isTogglingMap[user.uid] ?? false;
 
-              return DataRow(
-                cells: [
-                  DataCell(Text(user.name)),
-                  DataCell(Text(user.email)),
-                  DataCell(Text(user.role)),
-                  DataCell(Text(branchName)),
-                  DataCell(Text(user.disabled ? 'Disabled' : 'Active')),
-                  DataCell(
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.swap_horiz),
-                          tooltip: 'Assign Branch',
-                          onPressed:
-                              user.role == 'owner'
-                                  ? null
-                                  : () async {
-                                    await showDialog(
-                                      context: context,
-                                      builder:
-                                          (_) => AssignBranchDialog(user: user),
-                                    );
-                                  },
-                          color:
-                              user.role == 'owner'
-                                  ? Colors.grey
-                                  : null, // Gray out for owner
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.lock_reset),
-                          tooltip: 'Set Temp Password',
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) => SetTempPasswordDialog(user: user),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            user.disabled ? Icons.toggle_off : Icons.toggle_on,
-                          ),
-                          tooltip: user.disabled ? 'Enable' : 'Disable',
-                          onPressed: () {
-                            // Toggle disabled
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          tooltip: 'Delete',
-                          onPressed: () {
-                            // Delete user
-                          },
-                        ),
-                      ],
-                    ),
+          return DataRow(cells: [
+            DataCell(Text(user.name)),
+            DataCell(Text(user.email)),
+            DataCell(Text(user.role)),
+            DataCell(Text(branchName)),
+            DataCell(Text(user.disabled ? 'Disabled' : 'Active')),
+            DataCell(Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.swap_horiz),
+                  tooltip: 'Assign Branch',
+                  onPressed: user.role == 'owner'
+                      ? null
+                      : () async {
+                    await showDialog(
+                      context: context,
+                      builder: (_) => AssignBranchDialog(user: user),
+                    );
+                  },
+                  color: user.role == 'owner' ? Colors.grey : null,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.lock_reset),
+                  tooltip: 'Set Temp Password',
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => SetTempPasswordDialog(user: user),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    user.disabled ? Icons.toggle_off : Icons.toggle_on,
                   ),
-                ],
-              );
-            }).toList(),
+                  tooltip: user.disabled ? 'Enable' : 'Disable',
+                  onPressed: isToggling
+                      ? null
+                      : () async {
+                    setState(() {
+                      _isTogglingMap[user.uid] = true;
+                    });
+
+                    try {
+                      await ref.read(toggleUserStatusProvider(user.uid).future);
+                      setState(() {
+                        _errorMessage = null;
+                      });
+
+                      // Show success message based on user status
+                      final successMessage = user.disabled
+                          ? 'User enabled successfully'
+                          : 'User disabled successfully';
+                      showSuccessSnackBar(context, successMessage);
+                    } catch (e) {
+                      setState(() {
+                        _errorMessage = 'Error toggling status: $e';
+                      });
+                      showErrorSnackBar(context, _errorMessage!);
+                    } finally {
+                      setState(() {
+                        _isTogglingMap[user.uid] = false;
+                      });
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Delete',
+                  onPressed: () {
+                    // Delete user
+                  },
+                ),
+              ],
+            )),
+          ]);
+        }).toList(),
       ),
     );
   }
