@@ -52,7 +52,7 @@ class NavigationScaffold extends StatelessWidget {
               ))
                   .toList(),
             ),
-          Expanded(child: child),
+          Expanded(child: SafeArea(child: child)),
         ],
       ),
       bottomNavigationBar: !isWide
