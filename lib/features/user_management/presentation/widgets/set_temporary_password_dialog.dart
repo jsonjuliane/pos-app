@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/data/models/app_user.dart';
 
+/// A dialog that allows sending a password reset email to a user.
+///
+/// On success, returns `true`. On failure or cancel, returns `false`.
 class SetTempPasswordDialog extends ConsumerStatefulWidget {
   final AppUser user;
 
@@ -47,7 +49,7 @@ class _SetTempPasswordDialogState extends ConsumerState<SetTempPasswordDialog> {
       actionsAlignment: MainAxisAlignment.end,
       actions: [
         TextButton(
-          onPressed: isSending ? null : () => Navigator.of(context).pop(),
+          onPressed: isSending ? null : () => Navigator.of(context).pop(null),
           child: const Text('Cancel'),
         ),
         ElevatedButton.icon(
@@ -66,11 +68,12 @@ class _SetTempPasswordDialogState extends ConsumerState<SetTempPasswordDialog> {
             try {
               await FirebaseAuth.instance.sendPasswordResetEmail(email: user.email);
               if (context.mounted) {
-                Navigator.of(context).pop();
-                showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
+                Navigator.of(context).pop(true); // return success
               }
-            } catch (e) {
-              showErrorSnackBar(context, 'Failed to send reset email: $e');
+            } catch (_) {
+              if (context.mounted) {
+                Navigator.of(context).pop(false); // return failure
+              }
             } finally {
               if (mounted) setState(() => isSending = false);
             }

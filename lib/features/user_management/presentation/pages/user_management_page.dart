@@ -8,6 +8,7 @@ import '../../data/providers/user_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
 import '../widgets/delete_user_dialog.dart';
 import '../widgets/set_temporary_password_dialog.dart';
+import '../widgets/toggle_user_dialog.dart';
 
 class UserManagementPage extends ConsumerWidget {
   const UserManagementPage({super.key});
@@ -187,67 +188,73 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
                   onPressed: user.role == 'owner'
                       ? null
                       : () async {
-                    await showDialog(
+                    final success = await showDialog<bool>(
                       context: context,
                       builder: (_) => AssignBranchDialog(user: user),
                     );
+
+                    if (success == true) {
+                      showSuccessSnackBar(context, 'Branch assigned successfully');
+                    } else if (success == false) {
+                      showErrorSnackBar(context, 'Failed to assign branch');
+                    }
                   },
                   color: user.role == 'owner' ? Colors.grey : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.lock_reset),
                   tooltip: 'Set Temp Password',
-                  onPressed: () {
-                    showDialog(
+                  onPressed: () async {
+                    final success = await showDialog<bool>(
                       context: context,
                       builder: (_) => SetTempPasswordDialog(user: user),
                     );
-                  },
+
+                    if (success == true) {
+                      showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
+                    } else if (success == false) {
+                      showErrorSnackBar(context, 'Failed to send reset email.');
+                    }
+                  }
                 ),
                 IconButton(
                   icon: Icon(
                     user.disabled ? Icons.toggle_off : Icons.toggle_on,
                   ),
                   tooltip: user.disabled ? 'Enable' : 'Disable',
-                  onPressed: isToggling
-                      ? null
-                      : () async {
-                    setState(() {
-                      _isTogglingMap[user.uid] = true;
-                    });
-
-                    try {
-                      await ref.read(toggleUserStatusProvider(user.uid).future);
-                      setState(() {
-                        _errorMessage = null;
-                      });
-
-                      // Show success message based on user status
-                      final successMessage = user.disabled
-                          ? 'User enabled successfully'
-                          : 'User disabled successfully';
-                      showSuccessSnackBar(context, successMessage);
-                    } catch (e) {
-                      setState(() {
-                        _errorMessage = 'Error toggling status: $e';
-                      });
-                      showErrorSnackBar(context, _errorMessage!);
-                    } finally {
-                      setState(() {
-                        _isTogglingMap[user.uid] = false;
-                      });
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => ToggleUserStatusDialog(
+                        userName: user.name,
+                        currentStatus: user.disabled,
+                        onToggle: () => ref.read(toggleUserStatusProvider(user.uid).future),
+                      ),
+                    );
+  
+                    if (confirmed == true) {
+                      showSuccessSnackBar(
+                        context,
+                        user.disabled ? 'User enabled successfully' : 'User disabled successfully',
+                      );
                     }
-                  },
+                  }
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
                   tooltip: 'Delete',
-                  onPressed: () {
-                    showDialog(
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (_) => DeleteUserDialog(user: user),
                     );
-                  },
+
+                    if (confirmed == true) {
+                      showSuccessSnackBar(context, 'User deleted successfully');
+                    } else if (confirmed == false) {
+                      showErrorSnackBar(context, 'Failed to delete user');
+                    }
+                  }
                 ),
               ],
             )),

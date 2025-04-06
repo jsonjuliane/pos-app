@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/data/models/app_user.dart';
 import '../../data/providers/user_provider.dart';
 
@@ -47,7 +46,7 @@ class _DeleteUserDialogState extends ConsumerState<DeleteUserDialog> {
       actionsAlignment: MainAxisAlignment.end,
       actions: [
         TextButton(
-          onPressed: isDeleting ? null : () => Navigator.of(context).pop(),
+          onPressed: isDeleting ? null : () => Navigator.of(context).pop(null),
           child: const Text('Cancel'),
         ),
         ElevatedButton.icon(
@@ -72,11 +71,12 @@ class _DeleteUserDialogState extends ConsumerState<DeleteUserDialog> {
               await repository.deleteUser(widget.user.uid);
 
               if (context.mounted) {
-                Navigator.of(context).pop(); // Close dialog
-                showSuccessSnackBar(context, 'User deleted successfully');
+                Navigator.of(context).pop(true); // Notify success
               }
-            } catch (e) {
-              showErrorSnackBar(context, 'Failed to delete user: $e');
+            } catch (_) {
+              if (context.mounted) {
+                Navigator.of(context).pop(false); // Notify failure
+              }
             } finally {
               if (mounted) setState(() => isDeleting = false);
             }
