@@ -47,4 +47,13 @@ class UserRepository {
     }
   }
 
+  // Deletes a user document from the Firestore `users` collection.
+  Future<void> deleteUser(String userId) async {
+    try {
+      await _firebaseFirestore.collection('users').doc(userId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete user: $e');
+    }
+  }
+
 }

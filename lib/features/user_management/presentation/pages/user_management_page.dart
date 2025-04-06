@@ -6,7 +6,8 @@ import '../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/data/models/app_user.dart';
 import '../../data/providers/user_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
-import '../widgets/set_temporary_password.dart';
+import '../widgets/delete_user_dialog.dart';
+import '../widgets/set_temporary_password_dialog.dart';
 
 class UserManagementPage extends ConsumerWidget {
   const UserManagementPage({super.key});
@@ -242,7 +243,10 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
                   icon: const Icon(Icons.delete),
                   tooltip: 'Delete',
                   onPressed: () {
-                    // Delete user
+                    showDialog(
+                      context: context,
+                      builder: (_) => DeleteUserDialog(user: user),
+                    );
                   },
                 ),
               ],
