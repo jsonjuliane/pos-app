@@ -28,6 +28,9 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.8      # iOS-style icons
 
+  # App info
+  package_info_plus: ^4.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -4,6 +4,7 @@ import 'package:pos_app/features/user_management/data/providers/branch_provider.
 
 import '../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/data/models/app_user.dart';
+import '../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../data/providers/user_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
 import '../widgets/delete_user_dialog.dart';
@@ -15,6 +16,12 @@ class UserManagementPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authUser = ref.watch(authUserProvider).value;
+
+    if (authUser == null || !(authUser.role == 'admin' || authUser.role == 'owner')) {
+      return const Center(child: Text('Access denied'));
+    }
+
     final usersAsync = ref.watch(allUsersProvider);
 
     return usersAsync.when(

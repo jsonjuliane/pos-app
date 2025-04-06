@@ -1,41 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/auth/presentation/providers/auth_user_providers.dart';
 
-class NavigationScaffold extends StatelessWidget {
+class NavigationScaffold extends ConsumerWidget {
   final Widget child;
 
   const NavigationScaffold({super.key, required this.child});
 
-  static const _destinations = [
-    NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-    NavigationDestination(icon: Icon(Icons.group), label: 'Users'),
-    NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(authUserProvider);
     final isWide = MediaQuery.of(context).size.width >= 700;
+    final location = GoRouterState.of(context).uri.toString();
 
-    int selectedIndex = () {
-      if (location.startsWith('/users')) return 1;
-      if (location.startsWith('/settings')) return 2;
-      return 0;
-    }();
+    final user = userAsync.asData?.value;
+    final isAdminOrOwner = user?.role == 'admin' || user?.role == 'owner';
 
-    void onDestinationSelected(int index) {
-      switch (index) {
-        case 0:
-          context.go('/dashboard');
-          break;
-        case 1:
-          context.go('/users');
-          break;
-        case 2:
-          context.go('/settings');
-          break;
-      }
-    }
+    // Use a list of map entries to hold label, icon, and route
+    final navItems = <Map<String, dynamic>>[
+      {
+        'label': 'Dashboard',
+        'icon': const Icon(Icons.dashboard),
+        'route': '/dashboard',
+      },
+      if (isAdminOrOwner)
+        {
+          'label': 'Users',
+          'icon': const Icon(Icons.group),
+          'route': '/users',
+        },
+      {
+        'label': 'Settings',
+        'icon': const Icon(Icons.settings),
+        'route': '/settings',
+      },
+    ];
+
+    // Determine selected index based on current location
+    final selectedIndex = navItems.indexWhere((item) {
+      final route = item['route'] as String;
+      return location.startsWith(route);
+    });
 
     return Scaffold(
       body: Row(
@@ -43,14 +49,17 @@ class NavigationScaffold extends StatelessWidget {
           if (isWide)
             NavigationRail(
               selectedIndex: selectedIndex,
-              onDestinationSelected: onDestinationSelected,
+              onDestinationSelected: (index) {
+                final route = navItems[index]['route'] as String;
+                context.go(route);
+              },
               labelType: NavigationRailLabelType.all,
-              destinations: _destinations
-                  .map((e) => NavigationRailDestination(
-                icon: e.icon,
-                label: Text(e.label),
-              ))
-                  .toList(),
+              destinations: navItems.map((item) {
+                return NavigationRailDestination(
+                  icon: item['icon'],
+                  label: Text(item['label']),
+                );
+              }).toList(),
             ),
           Expanded(child: SafeArea(child: child)),
         ],
@@ -58,8 +67,16 @@ class NavigationScaffold extends StatelessWidget {
       bottomNavigationBar: !isWide
           ? NavigationBar(
         selectedIndex: selectedIndex,
-        onDestinationSelected: onDestinationSelected,
-        destinations: _destinations,
+        onDestinationSelected: (index) {
+          final route = navItems[index]['route'] as String;
+          context.go(route);
+        },
+        destinations: navItems.map((item) {
+          return NavigationDestination(
+            icon: item['icon'],
+            label: item['label'],
+          );
+        }).toList(),
       )
           : null,
     );
