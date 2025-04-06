@@ -17,29 +17,25 @@ class UserManagementPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final usersAsync = ref.watch(allUsersProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('User Management')),
-      body: usersAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (users) {
-          final isWide = MediaQuery.of(context).size.width >= 700;
-          return Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: _SearchAndFilterBar(),
-              ),
-              Expanded(
-                child:
-                    isWide
-                        ? _UserDataTable(users: users)
-                        : _UserListView(users: users),
-              ),
-            ],
-          );
-        },
-      ),
+    return usersAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (users) {
+        final isWide = MediaQuery.of(context).size.width >= 700;
+        return Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: _SearchAndFilterBar(),
+            ),
+            Expanded(
+              child: isWide
+                  ? _UserDataTable(users: users)
+                  : _UserListView(users: users),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -145,9 +141,7 @@ class _UserDataTable extends ConsumerStatefulWidget {
 }
 
 class _UserDataTableState extends ConsumerState<_UserDataTable> {
-  // A map to store the toggling state for each user (by UID)
   Map<String, bool> _isTogglingMap = {};
-
   String? _errorMessage;
 
   @override
@@ -192,7 +186,6 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
                       context: context,
                       builder: (_) => AssignBranchDialog(user: user),
                     );
-
                     if (success == true) {
                       showSuccessSnackBar(context, 'Branch assigned successfully');
                     } else if (success == false) {
@@ -202,25 +195,21 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
                   color: user.role == 'owner' ? Colors.grey : null,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.lock_reset),
-                  tooltip: 'Set Temp Password',
-                  onPressed: () async {
-                    final success = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => SetTempPasswordDialog(user: user),
-                    );
-
-                    if (success == true) {
-                      showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
-                    } else if (success == false) {
-                      showErrorSnackBar(context, 'Failed to send reset email.');
-                    }
-                  }
-                ),
+                    icon: const Icon(Icons.lock_reset),
+                    tooltip: 'Set Temp Password',
+                    onPressed: () async {
+                      final success = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => SetTempPasswordDialog(user: user),
+                      );
+                      if (success == true) {
+                        showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
+                      } else if (success == false) {
+                        showErrorSnackBar(context, 'Failed to send reset email.');
+                      }
+                    }),
                 IconButton(
-                  icon: Icon(
-                    user.disabled ? Icons.toggle_off : Icons.toggle_on,
-                  ),
+                  icon: Icon(user.disabled ? Icons.toggle_off : Icons.toggle_on),
                   tooltip: user.disabled ? 'Enable' : 'Disable',
                   onPressed: () async {
                     final confirmed = await showDialog<bool>(
@@ -231,14 +220,13 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
                         onToggle: () => ref.read(toggleUserStatusProvider(user.uid).future),
                       ),
                     );
-  
                     if (confirmed == true) {
                       showSuccessSnackBar(
                         context,
                         user.disabled ? 'User enabled successfully' : 'User disabled successfully',
                       );
                     }
-                  }
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
@@ -248,13 +236,12 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
                       context: context,
                       builder: (_) => DeleteUserDialog(user: user),
                     );
-
                     if (confirmed == true) {
                       showSuccessSnackBar(context, 'User deleted successfully');
                     } else if (confirmed == false) {
                       showErrorSnackBar(context, 'Failed to delete user');
                     }
-                  }
+                  },
                 ),
               ],
             )),
