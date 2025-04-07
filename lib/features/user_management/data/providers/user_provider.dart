@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/data/models/app_user.dart';
-import '../../../auth/presentation/providers/auth_user_providers.dart';
 import '../domain/repositories/user_repository.dart';
 
 final allUsersProvider = StreamProvider.autoDispose<List<AppUser>>((ref) {
@@ -26,7 +25,6 @@ final toggleUserStatusProvider = FutureProvider.autoDispose.family<void, String>
     throw Exception('Failed to toggle user status: $e');
   }
 });
-
 
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepository();

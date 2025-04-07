@@ -6,6 +6,7 @@ import '../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/data/models/app_user.dart';
 import '../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../data/providers/user_provider.dart';
+import '../providers/user_filter_provider.dart';
 import '../widgets/assign_branch_dialog.dart';
 import '../widgets/delete_user_dialog.dart';
 import '../widgets/set_temporary_password_dialog.dart';
@@ -28,6 +29,17 @@ class UserManagementPage extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (users) {
+        final searchQuery = ref.watch(userSearchQueryProvider).toLowerCase();
+        final selectedRole = ref.watch(userRoleFilterProvider);
+        final selectedBranch = ref.watch(userBranchFilterProvider);
+
+        final filteredUsers = users.where((user) {
+          final matchesSearch = user.email.toLowerCase().contains(searchQuery);
+          final matchesRole = selectedRole == 'all' || user.role == selectedRole;
+          final matchesBranch = selectedBranch == 'all' || user.branchId == selectedBranch;
+          return matchesSearch && matchesRole && matchesBranch;
+        }).toList();
+
         final isWide = MediaQuery.of(context).size.width >= 700;
         return Column(
           children: [
@@ -37,8 +49,8 @@ class UserManagementPage extends ConsumerWidget {
             ),
             Expanded(
               child: isWide
-                  ? _UserDataTable(users: users)
-                  : _UserListView(users: users),
+                  ? _UserDataTable(users: filteredUsers)
+                  : _UserListView(users: filteredUsers),
             ),
           ],
         );
@@ -47,11 +59,15 @@ class UserManagementPage extends ConsumerWidget {
   }
 }
 
-class _SearchAndFilterBar extends StatelessWidget {
+class _SearchAndFilterBar extends ConsumerWidget {
   const _SearchAndFilterBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedRole = ref.watch(userRoleFilterProvider);
+    final selectedBranch = ref.watch(userBranchFilterProvider);
+    final branchesAsync = ref.watch(allBranchesProvider);
+
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -64,9 +80,7 @@ class _SearchAndFilterBar extends StatelessWidget {
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
-            onChanged: (value) {
-              // TODO: Apply search filter logic
-            },
+            onChanged: (value) => ref.read(userSearchQueryProvider.notifier).state = value,
           ),
         ),
         DropdownButtonFormField<String>(
@@ -74,29 +88,31 @@ class _SearchAndFilterBar extends StatelessWidget {
             labelText: 'Role',
             border: OutlineInputBorder(),
           ),
-          value: 'all',
+          value: selectedRole,
           items: const [
             DropdownMenuItem(value: 'all', child: Text('All Roles')),
             DropdownMenuItem(value: 'admin', child: Text('Admin')),
             DropdownMenuItem(value: 'staff', child: Text('Staff')),
           ],
-          onChanged: (value) {
-            // TODO: Apply role filter logic
-          },
+          onChanged: (value) =>
+          ref.read(userRoleFilterProvider.notifier).state = value ?? 'all',
         ),
         DropdownButtonFormField<String>(
           decoration: const InputDecoration(
             labelText: 'Branch',
             border: OutlineInputBorder(),
           ),
-          value: 'all',
-          items: const [
-            DropdownMenuItem(value: 'all', child: Text('All Branches')),
-            // TODO: Add actual branches here
-          ],
-          onChanged: (value) {
-            // TODO: Apply branch filter logic
-          },
+          value: selectedBranch,
+          items: branchesAsync.when(
+            loading: () => [const DropdownMenuItem(value: 'all', child: Text('Loading...'))],
+            error: (e, _) => [DropdownMenuItem(value: 'all', child: Text('Error: $e'))],
+            data: (branches) => [
+              const DropdownMenuItem(value: 'all', child: Text('All Branches')),
+              ...branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
+            ],
+          ),
+          onChanged: (value) =>
+          ref.read(userBranchFilterProvider.notifier).state = value ?? 'all',
         ),
       ],
     );
