@@ -164,8 +164,64 @@ class _UserDataTable extends ConsumerStatefulWidget {
 }
 
 class _UserDataTableState extends ConsumerState<_UserDataTable> {
-  Map<String, bool> _isTogglingMap = {};
-  String? _errorMessage;
+  int? _sortColumnIndex = 0; // 👈 Default to "Name" column
+  bool _isAscending = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Sort initially by name in ascending order
+    widget.users.sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  void _sortUsers(
+      Comparable Function(AppUser user) getField,
+      int columnIndex,
+      bool ascending,
+      ) {
+    setState(() {
+      if (_sortColumnIndex == columnIndex) {
+        // If same column is clicked again, toggle sort direction
+        _isAscending = !_isAscending;
+      } else {
+        // New column sort, reset to ascending
+        _sortColumnIndex = columnIndex;
+        _isAscending = true;
+      }
+
+      widget.users.sort((a, b) {
+        final aField = getField(a);
+        final bField = getField(b);
+        return _isAscending ? aField.compareTo(bField) : bField.compareTo(aField);
+      });
+    });
+  }
+
+  Widget _buildSortableLabel(String label, int columnIndex) {
+    final isActive = _sortColumnIndex == columnIndex;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        if (isActive)
+          Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: AnimatedRotation(
+              turns: _isAscending ? 0.0 : 0.5, // 0.5 = 180 degrees
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: const Icon(
+                Icons.arrow_upward,
+                size: 16,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,9 +235,15 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         columnSpacing: 24,
-        columns: const [
-          DataColumn(label: Text('Name')),
-          DataColumn(label: Text('Email')),
+        columns: [
+          DataColumn(
+            onSort: (index, _) => _sortUsers((u) => u.name, index, true),
+            label: _buildSortableLabel('Name', 0),
+          ),
+          DataColumn(
+            onSort: (index, _) => _sortUsers((u) => u.email, index, true),
+            label: _buildSortableLabel('Email', 1),
+          ),
           DataColumn(label: Text('Role')),
           DataColumn(label: Text('Branch')),
           DataColumn(label: Text('Status')),
@@ -189,7 +251,6 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
         ],
         rows: widget.users.map((user) {
           final branchName = branchNames[user.branchId] ?? '-';
-          bool isToggling = _isTogglingMap[user.uid] ?? false;
 
           return DataRow(cells: [
             DataCell(Text(user.name)),
