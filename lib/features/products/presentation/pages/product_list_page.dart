@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/utils/error_handler.dart';
+import '../../../../shared/widgets/error_message_widget.dart';
+import '../../../auth/presentation/providers/auth_user_providers.dart';
+import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
-import '../../data/models/product.dart';
-import '../providers/selected_category_provider.dart';
-import '../providers/product_providers.dart';
-import '../widgets/category_selector.dart';
 import '../../../cart/presentation/widgets/order_summary_panel.dart';
+import '../../data/models/product.dart';
+import '../providers/product_providers.dart';
+import '../providers/selected_category_provider.dart';
+import '../widgets/category_selector.dart';
 import '../widgets/product_card.dart';
 
-/// Main product list page for wide layouts (tablet, desktop, web).
-/// Displays category selector, scrollable product grid, and order summary.
 class ProductListPage extends ConsumerStatefulWidget {
   const ProductListPage({super.key});
 
@@ -24,8 +26,6 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
   @override
   void initState() {
     super.initState();
-
-    // Scroll to top when selected category changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.listenManual<String>(selectedCategoryProvider, (_, __) {
         if (_scrollController.hasClients) {
@@ -43,94 +43,103 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width >= 900;
-    final cartItems = ref.watch(cartProvider);
+    final authUserAsync = ref.watch(authUserProvider);
     final productListAsync = ref.watch(productListProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
-      body: isWide
-          ? Row(
-        children: [
-          // Left panel: Category selector + product grid
-          Expanded(
-            flex: 7,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // When loaded, pass products to the CategorySelector
-                  productListAsync.when(
-                    data: (products) => CategorySelector(products: products),
-                    loading: () => const SizedBox(),
-                    error: (_, __) => const SizedBox(),
-                  ),
-                  const SizedBox(height: 12),
+    if (authUserAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-                  // Product grid
-                  Expanded(
-                    child: productListAsync.when(
-                      data: (products) {
-                        final selectedCategory = ref.watch(selectedCategoryProvider);
-                        final filtered = selectedCategory.toLowerCase() == 'all'
-                            ? products
-                            : products
-                            .where((p) =>
-                        p.category.toLowerCase() ==
-                            selectedCategory.toLowerCase())
-                            .toList();
+    if (authUserAsync.hasError) {
+      return ErrorMessageWidget(
+        message: mapFirestoreError(authUserAsync.error),
+        onRetry: () => ref.refresh(authUserProvider),
+      );
+    }
 
-                        return ProductGrid(
-                          products: filtered,
-                          controller: _scrollController,
-                        );
-                      },
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (err, _) =>
-                          Center(child: Text('Error loading products: $err')),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+    final user = authUserAsync.value;
+    if (user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-          // Right panel: Order summary
-          Expanded(
-            flex: 3,
-            child: OrderSummaryPanel(selectedItems: cartItems),
-          ),
-        ],
-      )
-          : const Center(child: Text('Mobile layout coming soon')),
+    final cartItems = ref.watch(cartProvider);
+
+    return productListAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => ErrorMessageWidget(
+        message: mapFirestoreError(err),
+        onRetry: () => ref.refresh(productListProvider),
+      ),
+      data: (products) => _MainContent(
+        scrollController: _scrollController,
+        products: products,
+        cartItems: cartItems,
+      ),
     );
   }
 }
 
-/// Responsive grid of product cards.
-class ProductGrid extends StatelessWidget {
+class _MainContent extends ConsumerWidget {
+  final ScrollController scrollController;
   final List<Product> products;
-  final ScrollController controller;
+  final List<CartItem> cartItems;
 
-  const ProductGrid({
-    super.key,
+  const _MainContent({
+    required this.scrollController,
     required this.products,
-    required this.controller,
+    required this.cartItems,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      controller: controller,
-      itemCount: products.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 3 / 4,
-      ),
-      itemBuilder: (context, index) {
-        return ProductCard(product: products[index]);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCategory = ref.watch(selectedCategoryProvider);
+    final filtered = selectedCategory.toLowerCase() == 'all'
+        ? products
+        : products
+        .where((p) =>
+    p.category.toLowerCase() == selectedCategory.toLowerCase())
+        .toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 900;
+        return Row(
+          children: [
+            Expanded(
+              flex: 7,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    CategorySelector(products: products),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: GridView.builder(
+                        controller: scrollController,
+                        itemCount: filtered.length,
+                        gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 3 / 4,
+                        ),
+                        itemBuilder: (context, index) {
+                          return ProductCard(product: filtered[index]);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (isWide)
+              Expanded(
+                flex: 3,
+                child: OrderSummaryPanel(selectedItems: cartItems),
+              ),
+          ],
+        );
       },
     );
   }

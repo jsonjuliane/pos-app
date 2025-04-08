@@ -32,6 +32,7 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
       if (!mounted) return;
 
       Navigator.pop(context); // Close dialog
+      //TODO: Use ui_helper.dart snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('📧 Reset link sent to $email'),
