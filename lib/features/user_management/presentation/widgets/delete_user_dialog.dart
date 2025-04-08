@@ -29,18 +29,37 @@ class _DeleteUserDialogState extends ConsumerState<DeleteUserDialog> {
           Text('Delete User', style: theme.textTheme.titleLarge),
         ],
       ),
-      content: Text.rich(
-        TextSpan(
-          children: [
-            const TextSpan(text: 'Are you sure you want to delete '),
-            TextSpan(
-              text: widget.user.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Are you sure you want to delete this user?',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
-            const TextSpan(text: '? This action cannot be undone.'),
-          ],
-        ),
-        style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                widget.user.name,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'This action cannot be undone. The user’s data may be permanently lost.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ],
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       actionsAlignment: MainAxisAlignment.end,
@@ -50,37 +69,39 @@ class _DeleteUserDialogState extends ConsumerState<DeleteUserDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton.icon(
-          icon: isDeleting
-              ? const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Icon(Icons.delete),
+          icon:
+              isDeleting
+                  ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Icon(Icons.delete),
           label: Text(isDeleting ? 'Deleting...' : 'Delete'),
           style: ElevatedButton.styleFrom(
             backgroundColor: theme.colorScheme.error,
             foregroundColor: theme.colorScheme.onError,
           ),
-          onPressed: isDeleting
-              ? null
-              : () async {
-            setState(() => isDeleting = true);
-            try {
-              final repository = ref.read(userRepositoryProvider);
-              await repository.deleteUser(widget.user.uid);
+          onPressed:
+              isDeleting
+                  ? null
+                  : () async {
+                    setState(() => isDeleting = true);
+                    try {
+                      final repository = ref.read(userRepositoryProvider);
+                      await repository.deleteUser(widget.user.uid);
 
-              if (context.mounted) {
-                Navigator.of(context).pop(true); // Notify success
-              }
-            } catch (_) {
-              if (context.mounted) {
-                Navigator.of(context).pop(false); // Notify failure
-              }
-            } finally {
-              if (mounted) setState(() => isDeleting = false);
-            }
-          },
+                      if (context.mounted) {
+                        Navigator.of(context).pop(true); // Notify success
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        Navigator.of(context).pop(false); // Notify failure
+                      }
+                    } finally {
+                      if (mounted) setState(() => isDeleting = false);
+                    }
+                  },
         ),
       ],
     );

@@ -33,18 +33,27 @@ class _AssignBranchDialogState extends ConsumerState<AssignBranchDialog> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: Row(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.swap_horiz),
-          const SizedBox(width: 12),
-          Text('Assign Branch', style: theme.textTheme.titleLarge),
+          Row(
+            children: [
+              const Icon(Icons.swap_horiz),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text('Assign Branch', style: theme.textTheme.titleLarge),
+              ),
+            ],
+          ),
+          // Optional: Add spacing or subtext
         ],
       ),
       content: branchesAsync.when(
-        loading: () => const SizedBox(
-          height: 80,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        loading:
+            () => const SizedBox(
+              height: 80,
+              child: Center(child: CircularProgressIndicator()),
+            ),
         error: (e, _) => Text('Error loading branches: $e'),
         data: (branches) {
           return Column(
@@ -52,8 +61,18 @@ class _AssignBranchDialogState extends ConsumerState<AssignBranchDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(widget.user.name, style: theme.textTheme.titleMedium),
-              Text(widget.user.email, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
-              Text(widget.user.role, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
+              Text(
+                widget.user.email,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.hintColor,
+                ),
+              ),
+              Text(
+                widget.user.role,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.hintColor,
+                ),
+              ),
               const SizedBox(height: 24),
               DropdownButtonFormField<String>(
                 value: selectedBranchId,
@@ -62,20 +81,27 @@ class _AssignBranchDialogState extends ConsumerState<AssignBranchDialog> {
                   labelText: 'Select a Branch',
                   border: OutlineInputBorder(),
                 ),
-                items: branches.map((branch) {
-                  return DropdownMenuItem(
-                    value: branch.id,
-                    child: Text(branch.name),
-                  );
-                }).toList(),
-                onChanged: isSaving ? null : (value) {
-                  setState(() => selectedBranchId = value);
-                },
+                items:
+                    branches.map((branch) {
+                      return DropdownMenuItem(
+                        value: branch.id,
+                        child: Text(branch.name),
+                      );
+                    }).toList(),
+                onChanged:
+                    isSaving
+                        ? null
+                        : (value) {
+                          setState(() => selectedBranchId = value);
+                        },
               ),
               if (errorMessage != null) ...[
                 const SizedBox(height: 12),
-                Text(errorMessage!, style: TextStyle(color: theme.colorScheme.error)),
-              ]
+                Text(
+                  errorMessage!,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ],
             ],
           );
         },
@@ -88,42 +114,46 @@ class _AssignBranchDialogState extends ConsumerState<AssignBranchDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton.icon(
-          icon: isSaving
-              ? const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Icon(Icons.check),
+          icon:
+              isSaving
+                  ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Icon(Icons.check),
           label: Text(isSaving ? 'Saving...' : 'Save'),
-          onPressed: isSaving
-              ? null
-              : () async {
-            if (selectedBranchId == null) {
-              setState(() => errorMessage = 'Please select a branch');
-              return;
-            }
+          onPressed:
+              isSaving
+                  ? null
+                  : () async {
+                    if (selectedBranchId == null) {
+                      setState(() => errorMessage = 'Please select a branch');
+                      return;
+                    }
 
-            setState(() {
-              isSaving = true;
-              errorMessage = null;
-            });
+                    setState(() {
+                      isSaving = true;
+                      errorMessage = null;
+                    });
 
-            try {
-              final userDoc = FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(widget.user.uid);
-              await userDoc.update({'branchId': selectedBranchId});
+                    try {
+                      final userDoc = FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(widget.user.uid);
+                      await userDoc.update({'branchId': selectedBranchId});
 
-              if (context.mounted) {
-                Navigator.of(context).pop(true); // success
-              }
-            } catch (e) {
-              setState(() => errorMessage = 'Failed to assign branch: $e');
-            } finally {
-              if (mounted) setState(() => isSaving = false);
-            }
-          },
+                      if (context.mounted) {
+                        Navigator.of(context).pop(true); // success
+                      }
+                    } catch (e) {
+                      setState(
+                        () => errorMessage = 'Failed to assign branch: $e',
+                      );
+                    } finally {
+                      if (mounted) setState(() => isSaving = false);
+                    }
+                  },
         ),
       ],
     );

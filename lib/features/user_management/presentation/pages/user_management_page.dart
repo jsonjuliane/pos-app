@@ -119,23 +119,29 @@ class _SearchAndFilterBar extends ConsumerWidget {
   }
 }
 
-class _UserListView extends StatelessWidget {
+class _UserListView extends ConsumerWidget {
   final List<AppUser> users;
 
   const _UserListView({required this.users});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final branchNames = ref.watch(branchNamesProvider).maybeWhen(
+      data: (map) => map,
+      orElse: () => {},
+    );
+
     return ListView.separated(
       itemCount: users.length,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       separatorBuilder: (_, __) => const Divider(),
       itemBuilder: (context, index) {
         final user = users[index];
+        final branchName = branchNames[user.branchId] ?? '-';
 
         return ListTile(
           title: Text(user.email),
-          subtitle: Text('${user.role} • ${user.branchId ?? 'Unassigned'}'),
+          subtitle: Text('${user.role} • $branchName'),
           trailing: IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () => _showUserActions(context, user),
@@ -336,13 +342,13 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
   }
 }
 
-class _UserActionSheet extends StatelessWidget {
+class _UserActionSheet extends ConsumerWidget {
   final AppUser user;
 
   const _UserActionSheet({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -353,29 +359,75 @@ class _UserActionSheet extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.swap_horiz),
             title: const Text('Assign Branch'),
-            onTap: () {
-              // TODO
+            onTap: user.role == 'owner'
+                ? null
+                : () async {
+              final success = await showDialog<bool>(
+                context: context,
+                builder: (_) => AssignBranchDialog(user: user),
+              );
+              Navigator.of(context).maybePop(); // Close sheet
+              if (success == true) {
+                showSuccessSnackBar(context, 'Branch assigned successfully');
+              } else if (success == false) {
+                showErrorSnackBar(context, 'Failed to assign branch');
+              }
             },
           ),
           ListTile(
             leading: const Icon(Icons.lock_reset),
             title: const Text('Set Temp Password'),
-            onTap: () {
-              // TODO
+            onTap: () async {
+              final success = await showDialog<bool>(
+                context: context,
+                builder: (_) => SetTempPasswordDialog(user: user),
+              );
+              Navigator.of(context).maybePop(); // Close sheet
+              if (success == true) {
+                showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
+              } else if (success == false) {
+                showErrorSnackBar(context, 'Failed to send reset email.');
+              }
             },
           ),
           ListTile(
             leading: const Icon(Icons.block),
             title: const Text('Disable/Enable'),
-            onTap: () {
-              // TODO
+            onTap: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (_) => ToggleUserStatusDialog(
+                  userName: user.name,
+                  currentStatus: user.disabled,
+                  onToggle: () =>
+                      ref.read(toggleUserStatusProvider(user.uid).future),
+                ),
+              );
+              Navigator.of(context).maybePop(); // Close sheet
+              if (confirmed == true) {
+                showSuccessSnackBar(
+                  context,
+                  user.disabled
+                      ? 'User enabled successfully'
+                      : 'User disabled successfully',
+                );
+              }
             },
           ),
           ListTile(
             leading: const Icon(Icons.delete_forever),
             title: const Text('Delete'),
-            onTap: () {
-              // TODO
+            onTap: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (_) => DeleteUserDialog(user: user),
+              );
+              Navigator.of(context).maybePop(); // Close sheet
+              if (confirmed == true) {
+                showSuccessSnackBar(context, 'User deleted successfully');
+              } else if (confirmed == false) {
+                showErrorSnackBar(context, 'Failed to delete user');
+              }
             },
           ),
         ],

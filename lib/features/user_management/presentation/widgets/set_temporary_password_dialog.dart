@@ -13,7 +13,8 @@ class SetTempPasswordDialog extends ConsumerStatefulWidget {
   const SetTempPasswordDialog({super.key, required this.user});
 
   @override
-  ConsumerState<SetTempPasswordDialog> createState() => _SetTempPasswordDialogState();
+  ConsumerState<SetTempPasswordDialog> createState() =>
+      _SetTempPasswordDialogState();
 }
 
 class _SetTempPasswordDialogState extends ConsumerState<SetTempPasswordDialog> {
@@ -28,20 +29,34 @@ class _SetTempPasswordDialogState extends ConsumerState<SetTempPasswordDialog> {
       title: Row(
         children: [
           const Icon(Icons.email),
-          const SizedBox(width: 12),
-          Text('Send Reset Password Email', style: theme.textTheme.titleLarge),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              'Reset Password Email',
+              style: theme.textTheme.titleLarge,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${user.name} (${user.email})', style: theme.textTheme.bodyMedium),
+          Text(
+            user.name,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(user.email, style: theme.textTheme.bodyMedium, softWrap: true),
           const SizedBox(height: 12),
           Text(
-            'This will send a password reset link to the user’s email address. '
-                'They will use it to create a new password securely.',
-            style: theme.textTheme.bodySmall,
+            'This will send a password reset link to the user’s email address.\n'
+            'They will use it to create a new password securely.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
           ),
         ],
       ),
@@ -53,31 +68,35 @@ class _SetTempPasswordDialogState extends ConsumerState<SetTempPasswordDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton.icon(
-          icon: isSending
-              ? const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Icon(Icons.send),
+          icon:
+              isSending
+                  ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Icon(Icons.send),
           label: Text(isSending ? 'Sending...' : 'Send Email'),
-          onPressed: isSending
-              ? null
-              : () async {
-            setState(() => isSending = true);
-            try {
-              await FirebaseAuth.instance.sendPasswordResetEmail(email: user.email);
-              if (context.mounted) {
-                Navigator.of(context).pop(true); // return success
-              }
-            } catch (_) {
-              if (context.mounted) {
-                Navigator.of(context).pop(false); // return failure
-              }
-            } finally {
-              if (mounted) setState(() => isSending = false);
-            }
-          },
+          onPressed:
+              isSending
+                  ? null
+                  : () async {
+                    setState(() => isSending = true);
+                    try {
+                      await FirebaseAuth.instance.sendPasswordResetEmail(
+                        email: user.email,
+                      );
+                      if (context.mounted) {
+                        Navigator.of(context).pop(true); // return success
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        Navigator.of(context).pop(false); // return failure
+                      }
+                    } finally {
+                      if (mounted) setState(() => isSending = false);
+                    }
+                  },
         ),
       ],
     );

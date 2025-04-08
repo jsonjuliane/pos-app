@@ -34,57 +34,91 @@ class _ToggleUserStatusDialogState extends State<ToggleUserStatusDialog> {
       title: Row(
         children: [
           Icon(widget.currentStatus ? Icons.toggle_on : Icons.toggle_off),
-          const SizedBox(width: 8),
-          Text('$action User'),
+          const SizedBox(width: 12),
+          Text('$action User', style: theme.textTheme.titleLarge),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Are you sure you want to $action ${widget.userName}?',
-            textAlign: TextAlign.center,
+            'Are you sure you want to $action this user?',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                widget.userName,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'This action will restrict this user from logging in or performing any actions in the system.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
           ),
           if (errorMessage != null) ...[
-            const SizedBox(height: 12),
-            Text(errorMessage!, style: TextStyle(color: theme.colorScheme.error)),
+            const SizedBox(height: 16),
+            Text(
+              errorMessage!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
           ],
         ],
       ),
       actions: [
         TextButton(
-          onPressed: isProcessing ? null : () => Navigator.of(context).pop(false),
+          onPressed:
+              isProcessing ? null : () => Navigator.of(context).pop(false),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: isProcessing
-              ? null
-              : () async {
-            setState(() {
-              isProcessing = true;
-              errorMessage = null;
-            });
+          onPressed:
+              isProcessing
+                  ? null
+                  : () async {
+                    setState(() {
+                      isProcessing = true;
+                      errorMessage = null;
+                    });
 
-            try {
-              await widget.onToggle();
-              if (context.mounted) Navigator.of(context).pop(true); // success
-            } catch (e) {
-              setState(() => errorMessage = 'Failed to update status: $e');
-            } finally {
-              setState(() => isProcessing = false);
-            }
-          },
+                    try {
+                      await widget.onToggle();
+                      if (context.mounted)
+                        Navigator.of(context).pop(true); // success
+                    } catch (e) {
+                      setState(
+                        () => errorMessage = 'Failed to update status: $e',
+                      );
+                    } finally {
+                      setState(() => isProcessing = false);
+                    }
+                  },
           style: ElevatedButton.styleFrom(
             foregroundColor: theme.colorScheme.onPrimary,
             backgroundColor: theme.colorScheme.primary,
           ),
-          child: isProcessing
-              ? const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : Text(action),
+          child:
+              isProcessing
+                  ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : Text(action),
         ),
       ],
     );
