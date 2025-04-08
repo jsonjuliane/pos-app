@@ -7,10 +7,12 @@ import '../../../auth/data/models/app_user.dart';
 import '../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../data/providers/user_provider.dart';
 import '../providers/user_filter_provider.dart';
+import '../utils/user_detail_view_helper.dart';
 import '../widgets/assign_branch_dialog.dart';
 import '../widgets/delete_user_dialog.dart';
-import '../widgets/set_temporary_password_dialog.dart';
+import '../widgets/reset_password_dialog.dart';
 import '../widgets/toggle_user_dialog.dart';
+import '../widgets/user_status_chip.dart';
 
 class UserManagementPage extends ConsumerWidget {
   const UserManagementPage({super.key});
@@ -19,7 +21,8 @@ class UserManagementPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authUser = ref.watch(authUserProvider).value;
 
-    if (authUser == null || !(authUser.role == 'admin' || authUser.role == 'owner')) {
+    if (authUser == null ||
+        !(authUser.role == 'admin' || authUser.role == 'owner')) {
       return const Center(child: Text('Access denied'));
     }
 
@@ -33,12 +36,17 @@ class UserManagementPage extends ConsumerWidget {
         final selectedRole = ref.watch(userRoleFilterProvider);
         final selectedBranch = ref.watch(userBranchFilterProvider);
 
-        final filteredUsers = users.where((user) {
-          final matchesSearch = user.email.toLowerCase().contains(searchQuery);
-          final matchesRole = selectedRole == 'all' || user.role == selectedRole;
-          final matchesBranch = selectedBranch == 'all' || user.branchId == selectedBranch;
-          return matchesSearch && matchesRole && matchesBranch;
-        }).toList();
+        final filteredUsers =
+            users.where((user) {
+              final matchesSearch = user.email.toLowerCase().contains(
+                searchQuery,
+              );
+              final matchesRole =
+                  selectedRole == 'all' || user.role == selectedRole;
+              final matchesBranch =
+                  selectedBranch == 'all' || user.branchId == selectedBranch;
+              return matchesSearch && matchesRole && matchesBranch;
+            }).toList();
 
         final isWide = MediaQuery.of(context).size.width >= 700;
         return Column(
@@ -48,9 +56,10 @@ class UserManagementPage extends ConsumerWidget {
               child: _SearchAndFilterBar(),
             ),
             Expanded(
-              child: isWide
-                  ? _UserDataTable(users: filteredUsers)
-                  : _UserListView(users: filteredUsers),
+              child:
+                  isWide
+                      ? _UserDataTable(users: filteredUsers)
+                      : _UserListView(users: filteredUsers),
             ),
           ],
         );
@@ -80,7 +89,9 @@ class _SearchAndFilterBar extends ConsumerWidget {
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
             ),
-            onChanged: (value) => ref.read(userSearchQueryProvider.notifier).state = value,
+            onChanged:
+                (value) =>
+                    ref.read(userSearchQueryProvider.notifier).state = value,
           ),
         ),
         DropdownButtonFormField<String>(
@@ -94,8 +105,10 @@ class _SearchAndFilterBar extends ConsumerWidget {
             DropdownMenuItem(value: 'admin', child: Text('Admin')),
             DropdownMenuItem(value: 'staff', child: Text('Staff')),
           ],
-          onChanged: (value) =>
-          ref.read(userRoleFilterProvider.notifier).state = value ?? 'all',
+          onChanged:
+              (value) =>
+                  ref.read(userRoleFilterProvider.notifier).state =
+                      value ?? 'all',
         ),
         DropdownButtonFormField<String>(
           decoration: const InputDecoration(
@@ -104,15 +117,32 @@ class _SearchAndFilterBar extends ConsumerWidget {
           ),
           value: selectedBranch,
           items: branchesAsync.when(
-            loading: () => [const DropdownMenuItem(value: 'all', child: Text('Loading...'))],
-            error: (e, _) => [DropdownMenuItem(value: 'all', child: Text('Error: $e'))],
-            data: (branches) => [
-              const DropdownMenuItem(value: 'all', child: Text('All Branches')),
-              ...branches.map((b) => DropdownMenuItem(value: b.id, child: Text(b.name))),
-            ],
+            loading:
+                () => [
+                  const DropdownMenuItem(
+                    value: 'all',
+                    child: Text('Loading...'),
+                  ),
+                ],
+            error:
+                (e, _) => [
+                  DropdownMenuItem(value: 'all', child: Text('Error: $e')),
+                ],
+            data:
+                (branches) => [
+                  const DropdownMenuItem(
+                    value: 'all',
+                    child: Text('All Branches'),
+                  ),
+                  ...branches.map(
+                    (b) => DropdownMenuItem(value: b.id, child: Text(b.name)),
+                  ),
+                ],
           ),
-          onChanged: (value) =>
-          ref.read(userBranchFilterProvider.notifier).state = value ?? 'all',
+          onChanged:
+              (value) =>
+                  ref.read(userBranchFilterProvider.notifier).state =
+                      value ?? 'all',
         ),
       ],
     );
@@ -126,10 +156,9 @@ class _UserListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final branchNames = ref.watch(branchNamesProvider).maybeWhen(
-      data: (map) => map,
-      orElse: () => {},
-    );
+    final branchNames = ref
+        .watch(branchNamesProvider)
+        .maybeWhen(data: (map) => map, orElse: () => {});
 
     return ListView.separated(
       itemCount: users.length,
@@ -140,29 +169,50 @@ class _UserListView extends ConsumerWidget {
         final branchName = branchNames[user.branchId] ?? '-';
 
         return ListTile(
-          title: Text(user.email),
-          subtitle: Text('${user.role} • $branchName'),
-          trailing: IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () => _showUserActions(context, user),
+          leading: CircleAvatar(
+            child: Text(
+              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+            ),
           ),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  user.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              UserStatusChip(isDisabled: user.disabled),
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.email,
+                style: Theme.of(context).textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              Text(
+                '${user.role} • $branchName',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+          isThreeLine: true,
+          onTap: () => UserDetailViewHelper.show(context, user),
         );
       },
-    );
-  }
-
-  void _showUserActions(BuildContext context, AppUser user) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => _UserActionSheet(user: user),
     );
   }
 }
 
 class _UserDataTable extends ConsumerStatefulWidget {
   final List<AppUser> users;
+
   const _UserDataTable({required this.users});
 
   @override
@@ -182,10 +232,10 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
   }
 
   void _sortUsers(
-      Comparable Function(AppUser user) getField,
-      int columnIndex,
-      bool ascending,
-      ) {
+    Comparable Function(AppUser user) getField,
+    int columnIndex,
+    bool ascending,
+  ) {
     setState(() {
       if (_sortColumnIndex == columnIndex) {
         // If same column is clicked again, toggle sort direction
@@ -199,7 +249,9 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
       widget.users.sort((a, b) {
         final aField = getField(a);
         final bField = getField(b);
-        return _isAscending ? aField.compareTo(bField) : bField.compareTo(aField);
+        return _isAscending
+            ? aField.compareTo(bField)
+            : bField.compareTo(aField);
       });
     });
   }
@@ -219,10 +271,7 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
               turns: _isAscending ? 0.0 : 0.5, // 0.5 = 180 degrees
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              child: const Icon(
-                Icons.arrow_upward,
-                size: 16,
-              ),
+              child: const Icon(Icons.arrow_upward, size: 16),
             ),
           ),
       ],
@@ -231,15 +280,15 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
 
   @override
   Widget build(BuildContext context) {
-    final branchNames = ref.watch(branchNamesProvider).maybeWhen(
-      data: (map) => map,
-      orElse: () => {},
-    );
+    final branchNames = ref
+        .watch(branchNamesProvider)
+        .maybeWhen(data: (map) => map, orElse: () => {});
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       scrollDirection: Axis.horizontal,
       child: DataTable(
+        showCheckboxColumn: false,
         columnSpacing: 24,
         columns: [
           DataColumn(
@@ -253,184 +302,54 @@ class _UserDataTableState extends ConsumerState<_UserDataTable> {
           DataColumn(label: Text('Role')),
           DataColumn(label: Text('Branch')),
           DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Actions')),
+          DataColumn(label: SizedBox.shrink()),
         ],
         rows: widget.users.map((user) {
           final branchName = branchNames[user.branchId] ?? '-';
 
-          return DataRow(cells: [
-            DataCell(Text(user.name)),
-            DataCell(Text(user.email)),
-            DataCell(Text(user.role)),
-            DataCell(Text(branchName)),
-            DataCell(Text(user.disabled ? 'Disabled' : 'Active')),
-            DataCell(Row(
-              children: [
+          return DataRow(
+            onSelectChanged: (_) => UserDetailViewHelper.show(context, user),
+            cells: [
+              DataCell(Text(user.name)),
+              DataCell(Text(user.email)),
+              DataCell(Text(user.role)),
+              DataCell(Text(branchName)),
+              DataCell(UserStatusChip(isDisabled: user.disabled)),
+              DataCell(
                 IconButton(
-                  icon: const Icon(Icons.swap_horiz),
-                  tooltip: 'Assign Branch',
-                  onPressed: user.role == 'owner'
-                      ? null
-                      : () async {
-                    final success = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AssignBranchDialog(user: user),
-                    );
-                    if (success == true) {
-                      showSuccessSnackBar(context, 'Branch assigned successfully');
-                    } else if (success == false) {
-                      showErrorSnackBar(context, 'Failed to assign branch');
-                    }
-                  },
-                  color: user.role == 'owner' ? Colors.grey : null,
-                ),
-                IconButton(
-                    icon: const Icon(Icons.lock_reset),
-                    tooltip: 'Set Temp Password',
-                    onPressed: () async {
-                      final success = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => SetTempPasswordDialog(user: user),
-                      );
-                      if (success == true) {
-                        showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
-                      } else if (success == false) {
-                        showErrorSnackBar(context, 'Failed to send reset email.');
-                      }
-                    }),
-                IconButton(
-                  icon: Icon(user.disabled ? Icons.toggle_off : Icons.toggle_on),
+                  icon: Icon(
+                    user.disabled ? Icons.toggle_off : Icons.toggle_on,
+                  ),
                   tooltip: user.disabled ? 'Enable' : 'Disable',
                   onPressed: () async {
                     final confirmed = await showDialog<bool>(
                       context: context,
-                      builder: (_) => ToggleUserStatusDialog(
+                      builder:
+                          (_) => ToggleUserStatusDialog(
                         userName: user.name,
                         currentStatus: user.disabled,
-                        onToggle: () => ref.read(toggleUserStatusProvider(user.uid).future),
+                        onToggle:
+                            () => ref.read(
+                          toggleUserStatusProvider(
+                            user.uid,
+                          ).future,
+                        ),
                       ),
                     );
                     if (confirmed == true) {
                       showSuccessSnackBar(
                         context,
-                        user.disabled ? 'User enabled successfully' : 'User disabled successfully',
+                        user.disabled
+                            ? 'User enabled successfully'
+                            : 'User disabled successfully',
                       );
                     }
                   },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  tooltip: 'Delete',
-                  onPressed: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => DeleteUserDialog(user: user),
-                    );
-                    if (confirmed == true) {
-                      showSuccessSnackBar(context, 'User deleted successfully');
-                    } else if (confirmed == false) {
-                      showErrorSnackBar(context, 'Failed to delete user');
-                    }
-                  },
-                ),
-              ],
-            )),
-          ]);
+              ),
+            ],
+          );
         }).toList(),
-      ),
-    );
-  }
-}
-
-class _UserActionSheet extends ConsumerWidget {
-  final AppUser user;
-
-  const _UserActionSheet({required this.user});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        shrinkWrap: true,
-        children: [
-          Text(user.email, style: Theme.of(context).textTheme.titleLarge),
-          const Divider(height: 24),
-          ListTile(
-            leading: const Icon(Icons.swap_horiz),
-            title: const Text('Assign Branch'),
-            onTap: user.role == 'owner'
-                ? null
-                : () async {
-              final success = await showDialog<bool>(
-                context: context,
-                builder: (_) => AssignBranchDialog(user: user),
-              );
-              Navigator.of(context).maybePop(); // Close sheet
-              if (success == true) {
-                showSuccessSnackBar(context, 'Branch assigned successfully');
-              } else if (success == false) {
-                showErrorSnackBar(context, 'Failed to assign branch');
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.lock_reset),
-            title: const Text('Set Temp Password'),
-            onTap: () async {
-              final success = await showDialog<bool>(
-                context: context,
-                builder: (_) => SetTempPasswordDialog(user: user),
-              );
-              Navigator.of(context).maybePop(); // Close sheet
-              if (success == true) {
-                showSuccessSnackBar(context, 'Reset email sent to ${user.email}');
-              } else if (success == false) {
-                showErrorSnackBar(context, 'Failed to send reset email.');
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.block),
-            title: const Text('Disable/Enable'),
-            onTap: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (_) => ToggleUserStatusDialog(
-                  userName: user.name,
-                  currentStatus: user.disabled,
-                  onToggle: () =>
-                      ref.read(toggleUserStatusProvider(user.uid).future),
-                ),
-              );
-              Navigator.of(context).maybePop(); // Close sheet
-              if (confirmed == true) {
-                showSuccessSnackBar(
-                  context,
-                  user.disabled
-                      ? 'User enabled successfully'
-                      : 'User disabled successfully',
-                );
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_forever),
-            title: const Text('Delete'),
-            onTap: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (_) => DeleteUserDialog(user: user),
-              );
-              Navigator.of(context).maybePop(); // Close sheet
-              if (confirmed == true) {
-                showSuccessSnackBar(context, 'User deleted successfully');
-              } else if (confirmed == false) {
-                showErrorSnackBar(context, 'Failed to delete user');
-              }
-            },
-          ),
-        ],
       ),
     );
   }

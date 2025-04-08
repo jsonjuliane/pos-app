@@ -7,17 +7,17 @@ import '../../../auth/data/models/app_user.dart';
 /// A dialog that allows sending a password reset email to a user.
 ///
 /// On success, returns `true`. On failure or cancel, returns `false`.
-class SetTempPasswordDialog extends ConsumerStatefulWidget {
+class ResetPasswordDialog extends ConsumerStatefulWidget {
   final AppUser user;
 
-  const SetTempPasswordDialog({super.key, required this.user});
+  const ResetPasswordDialog({super.key, required this.user});
 
   @override
-  ConsumerState<SetTempPasswordDialog> createState() =>
+  ConsumerState<ResetPasswordDialog> createState() =>
       _SetTempPasswordDialogState();
 }
 
-class _SetTempPasswordDialogState extends ConsumerState<SetTempPasswordDialog> {
+class _SetTempPasswordDialogState extends ConsumerState<ResetPasswordDialog> {
   bool isSending = false;
 
   @override

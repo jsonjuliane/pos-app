@@ -31,6 +31,9 @@ dependencies:
   # App info
   package_info_plus: ^4.0.2
 
+  # DateFormat
+  intl: ^0.18.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

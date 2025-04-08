@@ -11,6 +11,15 @@ final allUsersProvider = StreamProvider.autoDispose<List<AppUser>>((ref) {
   return userRepository.getAllUsers();
 });
 
+// Fetch detail from specific user
+final userByIdProvider = StreamProvider.family<AppUser?, String>((ref, uid) {
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .snapshots()
+      .map((doc) => doc.exists ? AppUser.fromDoc(doc) : null);
+});
+
 // Using FutureProvider to toggle user status with error handling
 final toggleUserStatusProvider = FutureProvider.autoDispose.family<void, String>((ref, userId) async {
   final userRepository = ref.read(userRepositoryProvider);
