@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/data/providers/auth_providers.dart';
-import '../../features/products/presentation/providers/selected_branch_provider.dart';
+import '../../features/dashboard/products/presentation/providers/selected_branch_provider.dart';
 import 'ui_helpers.dart';
 
 Future<void> showLogoutDialog(BuildContext context, WidgetRef ref) async {

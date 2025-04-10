@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../user_management/data/providers/branch_provider.dart';
+import '../../../../user_management/data/providers/branch_provider.dart';
 import '../providers/selected_branch_provider.dart';
 
 /// Displays a dialog for selecting a branch. Only used by owner accounts.

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pos_app/features/products/presentation/providers/selected_branch_provider.dart';
-import '../../../auth/presentation/providers/auth_user_providers.dart';
+import 'package:pos_app/features/dashboard/products/presentation/providers/selected_branch_provider.dart';
+import '../../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../data/models/product.dart';
 import '../../data/providers/product_repo_providers.dart';
 

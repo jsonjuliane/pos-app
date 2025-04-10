@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
-import '../../features/products/presentation/pages/product_list_page.dart';
+import '../../features/dashboard/products/presentation/pages/product_list_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/user_management/presentation/pages/user_management_page.dart';
 import '../../shared/widgets/navigation_scaffold.dart';
