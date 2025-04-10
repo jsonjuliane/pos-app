@@ -14,7 +14,7 @@ import '../providers/selected_branch_provider.dart';
 import '../providers/selected_category_provider.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/product_card.dart';
-import '../widgets/select_branch_dialog.dart';
+import '../../../../../shared/widgets/select_branch_dialog.dart';
 
 class ProductListPage extends ConsumerStatefulWidget {
   const ProductListPage({super.key});
