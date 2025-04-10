@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/providers/auth_providers.dart';
+import '../../features/dashboard/products/presentation/providers/selected_branch_provider.dart';
 import 'ui_helpers.dart';
 
 Future<void> showLogoutDialog(BuildContext context, WidgetRef ref) async {
@@ -55,6 +55,9 @@ Future<void> showLogoutDialog(BuildContext context, WidgetRef ref) async {
                             : () async {
                           setState(() => isLoggingOut = true);
                           try {
+                            // 🔑 Clear selected branch from SharedPreferences
+                            await ref.read(selectedBranchIdProvider.notifier).clear();
+
                             await ref.read(authRepositoryProvider).signOut();
                             if (context.mounted) {
                               Navigator.of(dialogContext).pop(true); // dismiss dialog
