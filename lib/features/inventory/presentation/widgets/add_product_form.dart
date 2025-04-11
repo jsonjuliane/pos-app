@@ -7,7 +7,7 @@ import 'package:pos_app/features/inventory/data/providers/inventory_category_pro
 /// Form to add a new product in Inventory Management.
 /// Includes all necessary fields and validation.
 class AddProductForm extends ConsumerStatefulWidget {
-  final void Function(NewProduct product) onSubmit;
+  final Future<void> Function(NewProduct product) onSubmit;
   final bool isOwner; // NEW
 
   const AddProductForm({
@@ -29,6 +29,7 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
   final _descriptionController = TextEditingController();
 
   bool _enabled = true;
+  bool _isSaving = false; // Track loading state
 
   @override
   void dispose() {
@@ -40,8 +41,10 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
+
+    setState(() => _isSaving = true); // Start loading
 
     final product = NewProduct(
       name: _nameController.text.trim(),
@@ -49,12 +52,11 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
       stockCount: int.tryParse(_stockController.text.trim()) ?? 0,
       enabled: _enabled,
       imageUrl: null,
-      // Optional, for future image upload
       category: _categoryController.text.trim(),
       description: _descriptionController.text.trim(),
     );
 
-    widget.onSubmit(product);
+    await widget.onSubmit(product); // Callback from parent
   }
 
   @override
@@ -151,12 +153,18 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
             const SizedBox(height: 12),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () {
-                FocusScope.of(context).unfocus(); // Dismiss keyboard
-                _submit(); // Validate & submit
+              onPressed: _isSaving ? null : () {
+                FocusScope.of(context).unfocus();
+                _submit();
               },
-              icon: const Icon(Icons.check),
-              label: const Text('Save Product'),
+              icon: _isSaving
+                  ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+                  : const Icon(Icons.check),
+              label: Text(_isSaving ? 'Saving...' : 'Save Product'),
             ),
           ],
         ),

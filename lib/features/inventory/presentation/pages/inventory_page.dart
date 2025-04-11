@@ -13,7 +13,9 @@ import '../../../dashboard/products/presentation/widgets/category_selector.dart'
 import '../../../user_management/data/providers/branch_provider.dart';
 import '../../data/providers/inventory_list_provider.dart';
 import '../../data/providers/inventory_repo_provider.dart';
+import '../providers/confirm_delete_dialog.dart';
 import '../widgets/add_product_form.dart';
+import '../widgets/edit_product_form.dart';
 import '../widgets/inventory_product_card.dart';
 import '../widgets/manage_category_form.dart';
 
@@ -227,8 +229,82 @@ class _InventoryContent extends ConsumerWidget {
                         final user = ref.watch(authUserProvider).value!;
                         return InventoryProductCard(
                           product: product,
-                          onEdit: () { /* Same as before */ },
-                          onDelete: () { /* Same as before */ },
+                          onEdit: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              builder:
+                                  (_) => EditProductForm(
+                                initialProduct: product,
+                                onSubmit: (updatedProduct) async {
+                                  final selectedBranchId = ref.read(
+                                    selectedBranchIdProvider,
+                                  );
+                                  if (selectedBranchId == null) return;
+
+                                  try {
+                                    await ref
+                                        .read(inventoryRepositoryProvider)
+                                        .updateProduct(
+                                      branchId: selectedBranchId,
+                                      productId: product.id,
+                                      product: updatedProduct,
+                                    );
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      showErrorSnackBar(
+                                        context,
+                                        e.toString(),
+                                      ); // <- your reusable snackbar utility
+                                    }
+                                  }
+
+                                  Navigator.of(context).pop();
+                                },
+                                isOwner:
+                                user.role == 'owner', // Pass here
+                              ),
+                            );
+                          },
+                          onDelete: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (_) => ConfirmDeleteDialog(
+                                title: 'Delete Product',
+                                message:
+                                'Are you sure you want to delete "${product.name}"?',
+                                onConfirm: () async {
+                                  final selectedBranchId = ref.read(
+                                    selectedBranchIdProvider,
+                                  );
+                                  if (selectedBranchId == null) return;
+
+                                  try {
+                                    await ref
+                                        .read(inventoryRepositoryProvider)
+                                        .deleteProduct(
+                                      branchId: selectedBranchId,
+                                      productId: product.id,
+                                    );
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      showErrorSnackBar(
+                                        context,
+                                        e.toString(),
+                                      ); // <- your reusable snackbar utility
+                                    }
+                                  }
+                                },
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              ref.invalidate(
+                                inventoryListProvider,
+                              ); // Refresh products
+                            }
+                          },
                           isOwner: user.role == 'owner',
                         );
                       },

@@ -8,7 +8,7 @@ import '../../data/providers/inventory_category_provider.dart';
 
 class EditProductForm extends ConsumerStatefulWidget {
   final Product initialProduct;
-  final void Function(NewProduct product) onSubmit;
+  final Future<void> Function(NewProduct product) onSubmit;
   final bool isOwner; // NEW
 
   const EditProductForm({
@@ -31,6 +31,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
   late final TextEditingController _categoryController;
   late final TextEditingController _descriptionController;
   bool _enabled = true;
+  bool _isSaving = false; // Track loading state
 
   @override
   void initState() {
@@ -56,8 +57,10 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
+
+    setState(() => _isSaving = true); // Start loading
 
     final product = NewProduct(
       name: _nameController.text.trim(),
@@ -69,7 +72,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
       description: _descriptionController.text.trim(),
     );
 
-    widget.onSubmit(product);
+    await widget.onSubmit(product); // Callback from parent
   }
 
   @override
@@ -138,13 +141,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
                                 });
                               }
                             }
-                            : (value) {
-                          if (value != null) {
-                            setState(() {
-                              _categoryController.text = value;
-                            });
-                          }
-                        },
+                            : null,
                     validator:
                         (value) =>
                             (value == null || value.isEmpty)
@@ -173,12 +170,18 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () {
+              onPressed: _isSaving ? null : () {
                 FocusScope.of(context).unfocus();
                 _submit();
               },
-              icon: const Icon(Icons.save),
-              label: const Text('Update Product'),
+              icon: _isSaving
+                  ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+                  : const Icon(Icons.check),
+              label: Text(_isSaving ? 'Updating...' : 'Update Product'),
             ),
           ],
         ),
