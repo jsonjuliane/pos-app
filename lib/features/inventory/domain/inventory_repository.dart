@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../shared/utils/error_handler.dart';
 import '../../dashboard/products/data/models/product.dart';
+import '../data/model/category.dart';
 import '../data/model/new_product.dart';
 
 /// Repository for handling inventory-related Firestore operations.
@@ -79,5 +80,30 @@ class InventoryRepository {
       throw Exception('Failed to add product. Please try again.');
     }
   }
-// CRUD methods to follow...
+
+  /// Fetches all categories for a specific branch.
+  Stream<List<Category>> getCategories({required String branchId}) {
+    return _firestore
+        .collection('branches')
+        .doc(branchId)
+        .collection('categories')
+        .orderBy('name')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Category.fromDoc(doc)).toList());
+  }
+
+  /// Adds a category from a branch by ID.
+  Future<void> addCategory({
+    required String branchId,
+    required String name,
+  }) async {
+    await _firestore
+        .collection('branches')
+        .doc(branchId)
+        .collection('categories')
+        .add({
+      'name': name,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
 }

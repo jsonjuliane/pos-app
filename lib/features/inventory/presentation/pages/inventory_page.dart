@@ -56,22 +56,22 @@ class InventoryPage extends ConsumerWidget {
       return Center(
         child: ElevatedButton(
           onPressed:
-          branchesAsync.isLoading
-              ? null
-              : () {
-            showDialog(
-              context: context,
-              builder: (_) => const SelectBranchDialog(),
-            );
-          },
+              branchesAsync.isLoading
+                  ? null
+                  : () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const SelectBranchDialog(),
+                    );
+                  },
           child:
-          branchesAsync.isLoading
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Text('Select Branch'),
+              branchesAsync.isLoading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Select Branch'),
         ),
       );
     }
@@ -96,49 +96,53 @@ class InventoryPage extends ConsumerWidget {
       body: inventoryListAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error:
-            (err, _) =>
-            ErrorMessageWidget(
+            (err, _) => ErrorMessageWidget(
               message: mapFirestoreError(err),
               onRetry: () => ref.refresh(inventoryListProvider),
             ),
         data: (products) => _InventoryContent(products: products),
       ),
-      floatingActionButton: user.role == 'owner' // Hide if not owner
-          ? FloatingActionButton.extended(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            builder:
-                (_) =>
-                AddProductForm(
-                  onSubmit: (newProduct) async {
-                    final selectedBranchId = ref.read(selectedBranchIdProvider);
-                    if (selectedBranchId == null) return;
+      floatingActionButton:
+          user.role ==
+                  'owner' // Hide if not owner
+              ? FloatingActionButton.extended(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder:
+                        (_) => AddProductForm(
+                          onSubmit: (newProduct) async {
+                            final selectedBranchId = ref.read(
+                              selectedBranchIdProvider,
+                            );
+                            if (selectedBranchId == null) return;
 
-                    try {
-                      await ref
-                          .read(inventoryRepositoryProvider)
-                          .addProduct(
-                        branchId: selectedBranchId,
-                        product: newProduct,
-                      );
-                      Navigator.of(context).pop();
-                    } catch (e) {
-                      if (context.mounted) {
-                        showErrorSnackBar(
-                          context,
-                          e.toString(),
-                        ); // <- your reusable snackbar utility
-                      }
-                    }
-                  },
-                ),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Product'),
-      ): null,
+                            try {
+                              await ref
+                                  .read(inventoryRepositoryProvider)
+                                  .addProduct(
+                                    branchId: selectedBranchId,
+                                    product: newProduct,
+                                  );
+                              Navigator.of(context).pop();
+                            } catch (e) {
+                              if (context.mounted) {
+                                showErrorSnackBar(
+                                  context,
+                                  e.toString(),
+                                ); // <- your reusable snackbar utility
+                              }
+                            }
+                          },
+                          isOwner: user.role == 'owner',
+                        ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add Product'),
+              )
+              : null,
     );
   }
 }
@@ -168,105 +172,101 @@ class _InventoryContent extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child:
-              products.isEmpty
-                  ? const Center(child: Text('No products available'))
-                  : GridView.builder(
-                itemCount: products.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 3 / 4,
-                ),
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  final user = ref
-                      .watch(authUserProvider)
-                      .value!;
-                  return InventoryProductCard(
-                    product: product,
-                    onEdit: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder:
-                            (_) =>
-                            EditProductForm(
-                              initialProduct: product,
-                              onSubmit: (updatedProduct) async {
-                                final selectedBranchId = ref.read(
-                                  selectedBranchIdProvider,
-                                );
-                                if (selectedBranchId == null) return;
+                  products.isEmpty
+                      ? const Center(child: Text('No products available'))
+                      : GridView.builder(
+                        itemCount: products.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 3 / 4,
+                        ),
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          final user = ref.watch(authUserProvider).value!;
+                          return InventoryProductCard(
+                            product: product,
+                            onEdit: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder:
+                                    (_) => EditProductForm(
+                                      initialProduct: product,
+                                      onSubmit: (updatedProduct) async {
+                                        final selectedBranchId = ref.read(
+                                          selectedBranchIdProvider,
+                                        );
+                                        if (selectedBranchId == null) return;
 
-                                try {
-                                  await ref
-                                      .read(inventoryRepositoryProvider)
-                                      .updateProduct(
-                                    branchId: selectedBranchId,
-                                    productId: product.id,
-                                    product: updatedProduct,
-                                  );
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    showErrorSnackBar(
-                                      context,
-                                      e.toString(),
-                                    ); // <- your reusable snackbar utility
-                                  }
-                                }
+                                        try {
+                                          await ref
+                                              .read(inventoryRepositoryProvider)
+                                              .updateProduct(
+                                                branchId: selectedBranchId,
+                                                productId: product.id,
+                                                product: updatedProduct,
+                                              );
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            showErrorSnackBar(
+                                              context,
+                                              e.toString(),
+                                            ); // <- your reusable snackbar utility
+                                          }
+                                        }
 
-                                Navigator.of(context).pop();
-                              },
-                              isOwner: user.role == 'owner', // Pass here
-                            ),
-                      );
-                    },
-                    onDelete: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder:
-                            (_) =>
-                            ConfirmDeleteDialog(
-                              title: 'Delete Product',
-                              message:
-                              'Are you sure you want to delete "${product
-                                  .name}"?',
-                              onConfirm: () async {
-                                final selectedBranchId = ref.read(
-                                  selectedBranchIdProvider,
-                                );
-                                if (selectedBranchId == null) return;
+                                        Navigator.of(context).pop();
+                                      },
+                                      isOwner:
+                                          user.role == 'owner', // Pass here
+                                    ),
+                              );
+                            },
+                            onDelete: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder:
+                                    (_) => ConfirmDeleteDialog(
+                                      title: 'Delete Product',
+                                      message:
+                                          'Are you sure you want to delete "${product.name}"?',
+                                      onConfirm: () async {
+                                        final selectedBranchId = ref.read(
+                                          selectedBranchIdProvider,
+                                        );
+                                        if (selectedBranchId == null) return;
 
-                                try {
-                                  await ref
-                                      .read(inventoryRepositoryProvider)
-                                      .deleteProduct(
-                                    branchId: selectedBranchId,
-                                    productId: product.id,
-                                  );
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    showErrorSnackBar(
-                                      context,
-                                      e.toString(),
-                                    ); // <- your reusable snackbar utility
-                                  }
-                                }
-                              },
-                            ),
-                      );
+                                        try {
+                                          await ref
+                                              .read(inventoryRepositoryProvider)
+                                              .deleteProduct(
+                                                branchId: selectedBranchId,
+                                                productId: product.id,
+                                              );
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            showErrorSnackBar(
+                                              context,
+                                              e.toString(),
+                                            ); // <- your reusable snackbar utility
+                                          }
+                                        }
+                                      },
+                                    ),
+                              );
 
-                      if (confirm == true) {
-                        ref.invalidate(
-                          inventoryListProvider,
-                        ); // Refresh products
-                      }
-                    },
-                    isOwner: user.role == 'owner',
-                  );
-                },
-              ),
+                              if (confirm == true) {
+                                ref.invalidate(
+                                  inventoryListProvider,
+                                ); // Refresh products
+                              }
+                            },
+                            isOwner: user.role == 'owner',
+                          );
+                        },
+                      ),
             ),
           ),
         );

@@ -2,12 +2,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../dashboard/products/presentation/providers/selected_branch_provider.dart';
+import '../model/category.dart';
 import 'inventory_repo_provider.dart';
 
-final inventoryCategoriesProvider = FutureProvider<List<String>>((ref) async {
+final inventoryCategoriesProvider = StreamProvider.autoDispose<List<Category>>((ref) {
   final branchId = ref.watch(selectedBranchIdProvider);
-  if (branchId == null) return [];
-  final repo = ref.read(inventoryRepositoryProvider);
-  final products = await repo.getProducts(branchId: branchId).first;
-  return products.map((p) => p.category).toSet().toList();
+  if (branchId == null) return const Stream.empty();
+  return ref.watch(inventoryRepositoryProvider).getCategories(branchId: branchId);
 });

@@ -8,8 +8,13 @@ import 'package:pos_app/features/inventory/data/providers/inventory_category_pro
 /// Includes all necessary fields and validation.
 class AddProductForm extends ConsumerStatefulWidget {
   final void Function(NewProduct product) onSubmit;
+  final bool isOwner; // NEW
 
-  const AddProductForm({super.key, required this.onSubmit});
+  const AddProductForm({
+    super.key,
+    required this.onSubmit,
+    required this.isOwner,
+  });
 
   @override
   ConsumerState<AddProductForm> createState() => _AddProductFormState();
@@ -43,7 +48,8 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
       price: double.tryParse(_priceController.text.trim()) ?? 0,
       stockCount: int.tryParse(_stockController.text.trim()) ?? 0,
       enabled: _enabled,
-      imageUrl: null, // Optional, for future image upload
+      imageUrl: null,
+      // Optional, for future image upload
       category: _categoryController.text.trim(),
       description: _descriptionController.text.trim(),
     );
@@ -65,14 +71,18 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Product Name'),
-              validator: (value) => (value == null || value.isEmpty) ? 'Required' : null,
+              validator:
+                  (value) =>
+                      (value == null || value.isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _priceController,
               decoration: const InputDecoration(labelText: 'Price'),
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
               validator: (value) {
                 if (value == null || value.isEmpty) return 'Required';
                 if (double.tryParse(value) == null) return 'Invalid number';
@@ -88,57 +98,36 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
             categoryListAsync.when(
               loading: () => const CircularProgressIndicator(),
               error: (e, _) => Text('Failed to load categories: $e'),
-              data: (categories) => Autocomplete<String>(
-                optionsBuilder: (textEditingValue) {
-                  if (textEditingValue.text.isEmpty) {
-                    return categories;
-                  }
-                  return categories.where((category) =>
-                      category.toLowerCase().contains(textEditingValue.text.toLowerCase()));
-                },
-                fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                  controller.text = _categoryController.text;
-
-                  controller.addListener(() {
-                    // Keep _categoryController in sync
-                    _categoryController.text = controller.text;
-                  });
-
-                  return TextFormField(
-                    controller: controller,
-                    focusNode: focusNode,
+              data:
+                  (categories) => DropdownButtonFormField<String>(
+                    value:
+                        _categoryController.text.isNotEmpty
+                            ? _categoryController.text
+                            : null,
                     decoration: const InputDecoration(labelText: 'Category'),
-                    validator: (value) =>
-                    (value == null || value.isEmpty) ? 'Required' : null,
-                  );
-                },
-                onSelected: (value) {
-                  _categoryController.text = value;
-                },
-                optionsViewBuilder: (context, onSelected, options) {
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      elevation: 4,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 500),
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: options.length,
-                          shrinkWrap: true,
-                          itemBuilder: (context, index) {
-                            final option = options.elementAt(index);
-                            return ListTile(
-                              title: Text(option),
-                              onTap: () => onSelected(option),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                    items:
+                        categories.map((category) {
+                          return DropdownMenuItem(
+                            value: category.name,
+                            child: Text(category.name),
+                          );
+                        }).toList(),
+                    onChanged:
+                        widget.isOwner
+                            ? (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _categoryController.text = value;
+                                });
+                              }
+                            }
+                            : null,
+                    validator:
+                        (value) =>
+                            (value == null || value.isEmpty)
+                                ? 'Required'
+                                : null,
+                  ),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -148,7 +137,8 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (value) {
                 if (value == null || value.isEmpty) return 'Required';
-                if (int.tryParse(value) == null) return 'Must be a valid number';
+                if (int.tryParse(value) == null)
+                  return 'Must be a valid number';
                 return null;
               },
             ),
