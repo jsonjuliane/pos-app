@@ -5,12 +5,14 @@ class InventoryProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool isOwner; // Add this
 
   const InventoryProductCard({
     super.key,
     required this.product,
     required this.onEdit,
     required this.onDelete,
+    required this.isOwner,
   });
 
   @override
@@ -26,18 +28,16 @@ class InventoryProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Image Section (takes remaining space)
           Expanded(
             child: hasImage
                 ? Image.network(product.imageUrl, fit: BoxFit.cover)
                 : Image.asset(fallbackImage, fit: BoxFit.cover),
           ),
-
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // Prevent overflow
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   product.name,
@@ -73,18 +73,20 @@ class InventoryProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextButton.icon(
-                        onPressed: onDelete,
-                        icon: const Icon(Icons.delete, size: 18),
-                        label: const Text('Delete'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: theme.colorScheme.onSurface,
-                          backgroundColor: theme.colorScheme.surfaceVariant,
+                    if (isOwner) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextButton.icon(
+                          onPressed: onDelete,
+                          icon: const Icon(Icons.delete, size: 18),
+                          label: const Text('Delete'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.onSurface,
+                            backgroundColor: theme.colorScheme.surfaceVariant,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ],

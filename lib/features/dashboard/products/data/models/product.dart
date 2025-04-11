@@ -58,8 +58,8 @@ class Product {
       inStock: data['inStock'] ?? false,
       imageUrl: data['imageUrl'] ?? '',
       description: data['description'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 }
