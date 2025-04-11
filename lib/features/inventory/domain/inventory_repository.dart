@@ -106,4 +106,17 @@ class InventoryRepository {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
+
+  /// Deletes a category by ID under a specific branch.
+  Future<void> deleteCategory({
+    required String branchId,
+    required String categoryId,
+  }) async {
+    await _firestore
+        .collection('branches')
+        .doc(branchId)
+        .collection('categories')
+        .doc(categoryId)
+        .delete();
+  }
 }
