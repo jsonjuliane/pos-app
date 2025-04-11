@@ -13,9 +13,7 @@ import '../../../dashboard/products/presentation/widgets/category_selector.dart'
 import '../../../user_management/data/providers/branch_provider.dart';
 import '../../data/providers/inventory_list_provider.dart';
 import '../../data/providers/inventory_repo_provider.dart';
-import '../providers/confirm_delete_dialog.dart';
 import '../widgets/add_product_form.dart';
-import '../widgets/edit_product_form.dart';
 import '../widgets/inventory_product_card.dart';
 import '../widgets/manage_category_form.dart';
 
@@ -78,6 +76,16 @@ class InventoryPage extends ConsumerWidget {
         ),
       );
     }
+
+    // Default category to all every time the page is refreshed
+    ref.listen<String?>(
+      selectedBranchIdProvider,
+          (previous, next) {
+        if (previous != next) {
+          ref.read(selectedCategoryProvider.notifier).state = 'All';
+        }
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
