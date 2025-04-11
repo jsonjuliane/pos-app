@@ -5,7 +5,7 @@ class InventoryProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final bool isOwner; // Add this
+  final bool isOwner;
 
   const InventoryProductCard({
     super.key,
@@ -37,8 +37,8 @@ class InventoryProductCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
+                // Product Name
                 Text(
                   product.name,
                   maxLines: 1,
@@ -47,19 +47,73 @@ class InventoryProductCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text('₱${product.price.toStringAsFixed(2)}'),
-                Text('Stock: ${product.stockCount}'),
-                Text(
-                  product.stockCount > 0 ? 'In Stock' : 'Out of Stock',
-                  style: TextStyle(
-                    color: product.stockCount > 0
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.error,
-                    fontWeight: FontWeight.w600,
+
+                if (product.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    product.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.hintColor,
+                    ),
                   ),
+                ],
+
+                const SizedBox(height: 8),
+
+                // Price & Stock Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '₱${product.price.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Stock: ${product.stockCount}',
+                        style: theme.textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
+
+                const SizedBox(height: 4),
+
+                // In Stock & Enabled Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.stockCount > 0 ? 'In Stock' : 'Out of Stock',
+                        style: TextStyle(
+                          color: product.stockCount > 0
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        product.enabled ? 'Enabled' : 'Disabled',
+                        style: TextStyle(
+                          color: product.enabled
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 12),
+
                 Row(
                   children: [
                     Expanded(
@@ -70,6 +124,7 @@ class InventoryProductCard extends StatelessWidget {
                         style: TextButton.styleFrom(
                           foregroundColor: theme.colorScheme.onSurface,
                           backgroundColor: theme.colorScheme.surfaceVariant,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -83,6 +138,7 @@ class InventoryProductCard extends StatelessWidget {
                           style: TextButton.styleFrom(
                             foregroundColor: theme.colorScheme.onSurface,
                             backgroundColor: theme.colorScheme.surfaceVariant,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
