@@ -23,7 +23,7 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
   final _categoryController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  bool _inStock = true;
+  bool _enabled = true;
 
   @override
   void dispose() {
@@ -42,7 +42,7 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
       name: _nameController.text.trim(),
       price: double.tryParse(_priceController.text.trim()) ?? 0,
       stockCount: int.tryParse(_stockController.text.trim()) ?? 0,
-      inStock: _inStock,
+      enabled: _enabled,
       imageUrl: null, // Optional, for future image upload
       category: _categoryController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -154,9 +154,9 @@ class _AddProductFormState extends ConsumerState<AddProductForm> {
             ),
             const SizedBox(height: 12),
             SwitchListTile(
-              title: const Text('In Stock'),
-              value: _inStock,
-              onChanged: (val) => setState(() => _inStock = val),
+              title: Text(_enabled ? 'Enabled' : 'Disabled'),
+              value: _enabled,
+              onChanged: (v) => setState(() => _enabled = v),
             ),
             const SizedBox(height: 12),
             const SizedBox(height: 20),

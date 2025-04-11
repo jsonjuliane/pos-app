@@ -6,7 +6,7 @@ class NewProduct {
   final String name;
   final double price;
   final int stockCount;
-  final bool inStock;
+  final bool enabled;
   final String category;
   final String description;
   final String? imageUrl; // Nullable for fallback image
@@ -15,7 +15,7 @@ class NewProduct {
     required this.name,
     required this.price,
     required this.stockCount,
-    required this.inStock,
+    required this.enabled,
     required this.category,
     this.description = '',
     this.imageUrl,
@@ -27,7 +27,7 @@ class NewProduct {
       'name': name,
       'price': price,
       'stockCount': stockCount,
-      'inStock': inStock,
+      'enabled': enabled,
       'category': category,
       'description': description,
       'imageUrl': imageUrl ?? '',

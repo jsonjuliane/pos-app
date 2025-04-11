@@ -18,7 +18,7 @@ class Product {
   final int stockCount;
 
   /// Whether this product is available for ordering
-  final bool inStock;
+  final bool enabled;
 
   /// Image URL of the product (can be local or hosted)
   final String imageUrl;
@@ -38,7 +38,7 @@ class Product {
     required this.price,
     required this.category,
     required this.stockCount,
-    required this.inStock,
+    required this.enabled,
     required this.imageUrl,
     required this.description,
     required this.createdAt,
@@ -55,7 +55,7 @@ class Product {
       price: (data['price'] ?? 0).toDouble(),
       category: data['category'] ?? '',
       stockCount: data['stockCount'] ?? 0,
-      inStock: data['inStock'] ?? false,
+      enabled: data['enabled'] ?? false,
       imageUrl: data['imageUrl'] ?? '',
       description: data['description'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

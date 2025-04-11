@@ -51,9 +51,9 @@ class InventoryProductCard extends StatelessWidget {
                 Text('₱${product.price.toStringAsFixed(2)}'),
                 Text('Stock: ${product.stockCount}'),
                 Text(
-                  product.inStock ? 'In Stock' : 'Out of Stock',
+                  product.stockCount > 0 ? 'In Stock' : 'Out of Stock',
                   style: TextStyle(
-                    color: product.inStock
+                    color: product.stockCount > 0
                         ? theme.colorScheme.primary
                         : theme.colorScheme.error,
                     fontWeight: FontWeight.w600,

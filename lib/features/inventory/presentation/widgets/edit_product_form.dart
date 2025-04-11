@@ -30,7 +30,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
   late final TextEditingController _stockController;
   late final TextEditingController _categoryController;
   late final TextEditingController _descriptionController;
-  bool _inStock = true;
+  bool _enabled = true;
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
     _stockController = TextEditingController(text: product.stockCount.toString());
     _categoryController = TextEditingController(text: product.category);
     _descriptionController = TextEditingController(text: product.description);
-    _inStock = product.inStock;
+    _enabled = product.enabled;
   }
 
   @override
@@ -61,7 +61,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
       name: _nameController.text.trim(),
       price: double.tryParse(_priceController.text.trim()) ?? 0,
       stockCount: int.tryParse(_stockController.text.trim()) ?? 0,
-      inStock: _inStock,
+      enabled: _enabled,
       imageUrl: widget.initialProduct.imageUrl,
       category: _categoryController.text.trim(),
       description: _descriptionController.text.trim(),
@@ -178,9 +178,9 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
             ),
             const SizedBox(height: 12),
             SwitchListTile(
-              title: const Text('In Stock'),
-              value: _inStock,
-              onChanged: (v) => setState(() => _inStock = v),
+              title: Text(_enabled ? 'Enabled' : 'Disabled'),
+              value: _enabled,
+              onChanged: (v) => setState(() => _enabled = v),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
