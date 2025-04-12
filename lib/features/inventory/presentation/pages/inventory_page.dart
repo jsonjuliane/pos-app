@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/shared/utils/ui_helpers.dart';
 
+import '../../../../shared/utils/device_helper.dart';
 import '../../../../shared/utils/error_handler.dart';
 import '../../../../shared/widgets/error_message_widget.dart';
 import '../../../../shared/widgets/select_branch_dialog.dart';
@@ -194,14 +196,7 @@ class _InventoryContent extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount = 2;
-        if (constraints.maxWidth >= 1400) {
-          crossAxisCount = 5;
-        } else if (constraints.maxWidth >= 1100) {
-          crossAxisCount = 4;
-        } else if (constraints.maxWidth >= 800) {
-          crossAxisCount = 3;
-        }
+        final deviceType = DeviceHelper.getDeviceType(context);
 
         return Center(
           child: ConstrainedBox(
@@ -219,10 +214,10 @@ class _InventoryContent extends ConsumerWidget {
                         : GridView.builder(
                       itemCount: filteredProducts.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
+                        crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType),
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
-                        childAspectRatio: 3 / 4,
+                        childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType),
                       ),
                       itemBuilder: (context, index) {
                         final product = filteredProducts[index];
