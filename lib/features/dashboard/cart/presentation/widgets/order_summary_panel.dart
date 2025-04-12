@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../shared/utils/ui_helpers.dart';
+import '../../../products/presentation/widgets/checkout_confirmation_dialog.dart';
 import '../../data/models/cart_item.dart';
 import '../providers/cart_providers.dart';
 
@@ -149,7 +151,22 @@ class OrderSummaryPanel extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (selectedItems.isEmpty) {
+                              showErrorSnackBar(context, 'Cart is empty. Please add items first.');
+                              return;
+                            }
+
+                            showCheckoutConfirmationDialog(
+                              context: context,
+                              cartItems: selectedItems,
+                              onPay: (paymentAmount, payLater) {
+                                // TODO: Handle payment logic
+                                print('Payment Amount: $paymentAmount');
+                                print('Pay Later? $payLater');
+                              },
+                            );
+                          },
                           child: Text('Checkout'),
                         ),
                       ),
