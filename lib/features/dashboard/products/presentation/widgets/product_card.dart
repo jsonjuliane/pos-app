@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../shared/utils/ui_helpers.dart';
 import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../../data/models/product.dart';
@@ -21,7 +22,12 @@ class ProductCard extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return GestureDetector(
-      onTap: () => ref.read(cartProvider.notifier).add(product),
+      onTap: () => ref.read(cartProvider.notifier).add(
+        product,
+        onError: (msg) {
+          //TODO: Do something if needed
+        },
+      ),
       onLongPress: () => ref.read(cartProvider.notifier).remove(product),
       child: Card(
         elevation: 3,
