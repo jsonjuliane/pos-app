@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../../data/models/product.dart';
 
-/// A product card that:
-/// - Adds product to cart on tap
-/// - Removes one from cart on long press
-/// - Shows fallback image if `imageUrl` is empty
 class ProductCard extends ConsumerWidget {
   final Product product;
 
@@ -21,57 +18,85 @@ class ProductCard extends ConsumerWidget {
       orElse: () => CartItem(product: product, quantity: 0),
     );
 
-    final hasImage = product.imageUrl.isNotEmpty;
-    final defaultImage = 'assets/images/special_wow_seafood.jpg';
+    final theme = Theme.of(context);
 
     return GestureDetector(
       onTap: () => ref.read(cartProvider.notifier).add(product),
       onLongPress: () => ref.read(cartProvider.notifier).remove(product),
       child: Card(
-        elevation: 4,
+        elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(12),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image section (asset or network fallback)
-              Expanded(
-                child: hasImage
-                    ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                    : Image.asset(defaultImage, fit: BoxFit.contain),
-              ),
-              const SizedBox(height: 8),
-
-              // Product name
+              // Product Name
               Text(
                 product.name,
-                style: const TextStyle(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
                 ),
               ),
 
-              // Price display
+              if (product.description.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  product.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 8),
+
               Text(
-                '₱${product.price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                product.category,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.hintColor,
                 ),
               ),
-              const SizedBox(height: 12),
 
-              // Cart quantity display
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '₱${product.price.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Stock: ${product.stockCount}',
+                      style: theme.textTheme.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 4),
+
               Text(
                 cartItem.quantity > 0
                     ? 'In cart: ${cartItem.quantity}'
                     : 'Tap to add • Long press to remove',
-                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: cartItem.quantity > 0
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
+                      ? theme.colorScheme.primary
+                      : theme.hintColor,
                 ),
               ),
             ],

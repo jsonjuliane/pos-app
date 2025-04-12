@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../shared/utils/device_helper.dart';
 import '../../../../../shared/utils/error_handler.dart';
 import '../../../../../shared/widgets/error_message_widget.dart';
+import '../../../../../shared/widgets/select_branch_dialog.dart';
 import '../../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../../../user_management/data/providers/branch_provider.dart';
 import '../../../cart/data/models/cart_item.dart';
@@ -14,7 +16,6 @@ import '../providers/selected_branch_provider.dart';
 import '../providers/selected_category_provider.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/product_card.dart';
-import '../../../../../shared/widgets/select_branch_dialog.dart';
 
 class ProductListPage extends ConsumerStatefulWidget {
   const ProductListPage({super.key});
@@ -72,21 +73,23 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
 
       return Center(
         child: ElevatedButton(
-          onPressed: branchesAsync.isLoading
-              ? null
-              : () {
-            showDialog(
-              context: context,
-              builder: (_) => const SelectBranchDialog(),
-            );
-          },
-          child: branchesAsync.isLoading
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Text('Select Branch'),
+          onPressed:
+              branchesAsync.isLoading
+                  ? null
+                  : () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const SelectBranchDialog(),
+                    );
+                  },
+          child:
+              branchesAsync.isLoading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Select Branch'),
         ),
       );
     }
@@ -134,15 +137,17 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       ),
       body: productListAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => ErrorMessageWidget(
-          message: mapFirestoreError(err),
-          onRetry: () => ref.refresh(productListProvider),
-        ),
-        data: (products) => _MainContent(
-          scrollController: _scrollController,
-          products: products,
-          cartItems: cartItems,
-        ),
+        error:
+            (err, _) => ErrorMessageWidget(
+              message: mapFirestoreError(err),
+              onRetry: () => ref.refresh(productListProvider),
+            ),
+        data:
+            (products) => _MainContent(
+              scrollController: _scrollController,
+              products: products,
+              cartItems: cartItems,
+            ),
       ),
     );
   }
@@ -162,53 +167,157 @@ class _MainContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCategory = ref.watch(selectedCategoryProvider);
-    final filtered = selectedCategory.toLowerCase() == 'all'
-        ? products
-        : products
-        .where((p) =>
-    p.category.toLowerCase() == selectedCategory.toLowerCase())
-        .toList();
+    final filtered =
+        selectedCategory.toLowerCase() == 'all'
+            ? products
+            : products
+                .where(
+                  (p) =>
+                      p.category.toLowerCase() ==
+                      selectedCategory.toLowerCase(),
+                )
+                .toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 900;
-        return Row(
-          children: [
-            Expanded(
-              flex: 7,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    CategorySelector(products: products),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: filtered.isEmpty
-                          ? const Center(child: Text('No products available'))
-                          : GridView.builder(
-                        controller: scrollController,
-                        itemCount: filtered.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 3 / 4,
+
+        return isWide
+            ? Row(
+              children: [
+                Expanded(
+                  flex: 7,
+                  child: _ProductGrid(
+                    products: products,
+                    filtered: filtered,
+                    scrollController: scrollController,
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: OrderSummaryPanel(selectedItems: cartItems),
+                ),
+              ],
+            )
+            : Stack(
+              children: [
+                _ProductGrid(
+                  products: products,
+                  filtered: filtered,
+                  scrollController: scrollController,
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
                         ),
-                        itemBuilder: (context, index) {
-                          return ProductCard(product: filtered[index]);
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (_) => const _OrderSummarySheet(),
+                          );
                         },
+                        icon: const Icon(Icons.shopping_cart),
+                        label: const Text('View Cart'),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            if (isWide)
-              Expanded(
-                flex: 3,
-                child: OrderSummaryPanel(selectedItems: cartItems),
-              ),
-          ],
+              ],
+            );
+      },
+    );
+  }
+}
+
+class _ProductGrid extends StatelessWidget {
+  final List<Product> products;
+  final List<Product> filtered;
+  final ScrollController scrollController;
+
+  const _ProductGrid({
+    required this.products,
+    required this.filtered,
+    required this.scrollController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final deviceType = DeviceHelper.getDeviceType(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CategorySelector(products: products),
+          const SizedBox(height: 12),
+          Expanded(
+            child:
+                filtered.isEmpty
+                    ? const Center(child: Text('No products available'))
+                    : GridView.builder(
+                      controller: scrollController,
+                      itemCount: filtered.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: DeviceHelper.getCrossAxisCount(
+                          deviceType,
+                          false,
+                        ),
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: DeviceHelper.getChildAspectRatio(
+                          deviceType,
+                          false,
+                        ),
+                      ),
+                      itemBuilder: (context, index) {
+                        return ProductCard(product: filtered[index]);
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderSummarySheet extends ConsumerStatefulWidget {
+  const _OrderSummarySheet();
+
+  @override
+  ConsumerState<_OrderSummarySheet> createState() => _OrderSummarySheetState();
+}
+
+class _OrderSummarySheetState extends ConsumerState<_OrderSummarySheet> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Proper listenManual for cart changes
+    ref.listenManual<List<CartItem>>(cartProvider, (previous, next) {
+      // Only pop when going from non-empty to empty cart
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cartItems = ref.watch(cartProvider);
+
+    return DraggableScrollableSheet(
+      expand: false,
+      builder: (context, scrollController) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: OrderSummaryPanel(selectedItems: cartItems),
         );
       },
     );
