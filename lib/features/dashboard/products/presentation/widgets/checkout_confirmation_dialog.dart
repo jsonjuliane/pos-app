@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pos_app/features/orders/data/models/product_order.dart';
 
 import '../../../../../shared/utils/ui_helpers.dart';
+import '../../../../orders/data/models/order_item.dart';
+import '../../../../orders/data/providers/order_repo_providers.dart';
 import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../providers/selected_branch_provider.dart';
@@ -14,6 +18,7 @@ Future<void> showCheckoutConfirmationDialog({
   required void Function(double paymentAmount, bool payLater) onPay,
 }) async {
   double paymentAmount = 0;
+  String customerName = "";
   bool discountApplied = false;
 
   double calculateTotal() {
@@ -86,6 +91,16 @@ Future<void> showCheckoutConfirmationDialog({
                       },
                     );
                   }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  keyboardType: TextInputType.name,
+                  decoration: const InputDecoration(
+                    labelText: 'Customer Name',
+                  ),
+                  onChanged: (value) {
+                    customerName = value;
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -180,6 +195,12 @@ Future<void> showCheckoutConfirmationDialog({
                     context: context,
                     ref: ref,
                     cartItems: cartItems,
+                    customerName: customerName,
+                    paymentAmount: paymentAmount,
+                    totalAfterDiscount: totalAfterDiscount,
+                    discountApplied: discountApplied,
+                    discountAmount: discountAmount,
+                    payLater: true,
                   );
 
                   Navigator.of(context).pop();
@@ -194,6 +215,12 @@ Future<void> showCheckoutConfirmationDialog({
                     context: context,
                     ref: ref,
                     cartItems: cartItems,
+                    customerName: customerName,
+                    paymentAmount: paymentAmount,
+                    totalAfterDiscount: totalAfterDiscount,
+                    discountApplied: discountApplied,
+                    discountAmount: discountAmount,
+                    payLater: false,
                   );
 
                   Navigator.of(context).pop();
@@ -215,12 +242,24 @@ Future<void> _handleCheckout({
   required BuildContext context,
   required WidgetRef ref,
   required List<CartItem> cartItems,
+  required String customerName,
+  required double paymentAmount,
+  required double totalAfterDiscount,
+  required bool discountApplied,
+  required double discountAmount,
+  required bool payLater,
 }) async {
   final branchId = ref.read(selectedBranchIdProvider);
   if (branchId == null) {
     showErrorSnackBar(context, 'Branch not selected');
     return;
   }
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
 
   try {
     final batch = FirebaseFirestore.instance.batch();
@@ -239,9 +278,71 @@ Future<void> _handleCheckout({
 
     await batch.commit();
 
+    final order = ProductOrder(
+      id: '',
+      branchId: branchId,
+      paid: !payLater,
+      paymentAmount: paymentAmount,
+      totalAmount: totalAfterDiscount,
+      discountApplied: discountApplied,
+      discountAmount: discountAmount,
+      items: cartItems.map((item) {
+        return OrderItem(
+          productId: item.product.id,
+          customerName: customerName,
+          name: item.product.name,
+          price: item.product.price,
+          quantity: item.quantity,
+          subtotal: item.totalPrice,
+        );
+      }).toList(),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    await ref.read(orderRepoProvider).createOrder(
+      branchId: branchId,
+      order: order,
+    );
+
     ref.read(cartProvider.notifier).clear();
-    showSuccessSnackBar(context, 'Checkout successful!');
+
+    Navigator.of(context).pop(); // close loading
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Checkout Successful'),
+        content: const Text('Order has been placed successfully.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.go('/orders');
+            },
+            child: const Text('Go to Orders'),
+          ),
+        ],
+      ),
+    );
   } catch (e) {
-    showErrorSnackBar(context, 'Checkout failed. Please try again.');
+    Navigator.of(context).pop(); // close loading
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Checkout Failed'),
+        content: Text('Error: $e'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 }
