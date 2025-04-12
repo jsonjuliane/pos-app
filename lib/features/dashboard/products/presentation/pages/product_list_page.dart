@@ -167,16 +167,14 @@ class _MainContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCategory = ref.watch(selectedCategoryProvider);
-    final filtered =
-        selectedCategory.toLowerCase() == 'all'
-            ? products
-            : products
-                .where(
-                  (p) =>
-                      p.category.toLowerCase() ==
-                      selectedCategory.toLowerCase(),
-                )
-                .toList();
+    final filtered = selectedCategory.toLowerCase() == 'all'
+        ? products
+        : products
+        .where((p) => p.category.toLowerCase() == selectedCategory.toLowerCase())
+        .toList();
+
+    final inStockProducts = filtered.where((p) => p.stockCount > 0 && p.enabled).toList();
+    final outOfStockProducts = filtered.where((p) => p.stockCount == 0 || !p.enabled).toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -184,66 +182,66 @@ class _MainContent extends ConsumerWidget {
 
         return isWide
             ? Row(
-              children: [
-                Expanded(
-                  flex: 7,
-                  child: _ProductGrid(
-                    products: products,
-                    filtered: filtered,
-                    scrollController: scrollController,
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: OrderSummaryPanel(selectedItems: cartItems),
-                ),
-              ],
-            )
+          children: [
+            Expanded(
+              flex: 7,
+              child: _ProductGrid(
+                scrollController: scrollController,
+                inStock: inStockProducts,
+                outOfStock: outOfStockProducts,
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: OrderSummaryPanel(selectedItems: cartItems),
+            ),
+          ],
+        )
             : Stack(
-              children: [
-                _ProductGrid(
-                  products: products,
-                  filtered: filtered,
-                  scrollController: scrollController,
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                        ),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (_) => const _OrderSummarySheet(),
-                          );
-                        },
-                        icon: const Icon(Icons.shopping_cart),
-                        label: const Text('View Cart'),
-                      ),
+          children: [
+            _ProductGrid(
+              scrollController: scrollController,
+              inStock: inStockProducts,
+              outOfStock: outOfStockProducts,
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
                     ),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (_) => const _OrderSummarySheet(),
+                      );
+                    },
+                    icon: const Icon(Icons.shopping_cart),
+                    label: const Text('View Cart'),
                   ),
                 ),
-              ],
-            );
+              ),
+            ),
+          ],
+        );
       },
     );
   }
 }
 
 class _ProductGrid extends StatelessWidget {
-  final List<Product> products;
-  final List<Product> filtered;
   final ScrollController scrollController;
+  final List<Product> inStock;
+  final List<Product> outOfStock;
 
   const _ProductGrid({
-    required this.products,
-    required this.filtered,
     required this.scrollController,
+    required this.inStock,
+    required this.outOfStock,
   });
 
   @override
@@ -255,31 +253,52 @@ class _ProductGrid extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CategorySelector(products: products),
+          CategorySelector(products: [...inStock, ...outOfStock]),
           const SizedBox(height: 12),
+
           Expanded(
-            child:
-                filtered.isEmpty
-                    ? const Center(child: Text('No products available'))
-                    : GridView.builder(
-                      controller: scrollController,
-                      itemCount: filtered.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: DeviceHelper.getCrossAxisCount(
-                          deviceType,
-                          false,
-                        ),
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        childAspectRatio: DeviceHelper.getChildAspectRatio(
-                          deviceType,
-                          false,
-                        ),
-                      ),
-                      itemBuilder: (context, index) {
-                        return ProductCard(product: filtered[index]);
-                      },
+            child: ListView(
+              controller: scrollController,
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: inStock.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, false),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, false),
+                  ),
+                  itemBuilder: (context, index) {
+                    return ProductCard(product: inStock[index]);
+                  },
+                ),
+
+                if (outOfStock.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    'Out of Stock / Disabled',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: outOfStock.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, false),
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, false),
                     ),
+                    itemBuilder: (context, index) {
+                      return ProductCard(product: outOfStock[index]);
+                    },
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),

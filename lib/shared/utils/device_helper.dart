@@ -57,16 +57,12 @@ class DeviceHelper {
       case DeviceType.web:
         return 1.1;
       case DeviceType.tabletLandscape:
-        if(inventory) {
           return 1.3;
-        }else{
-          return 1.4;
-        }
       case DeviceType.tabletPortrait:
         if(inventory) {
           return 0.9;
         }else{
-          return 1.2;
+          return 1.0;
         }
       case DeviceType.mobileLandscape:
         if(inventory) {
@@ -79,7 +75,7 @@ class DeviceHelper {
       if(inventory) {
         return 0.75;
       }else{
-        return 0.90;
+        return 0.85;
       }
     }
   }
