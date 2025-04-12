@@ -24,7 +24,7 @@ class CategorySelector extends ConsumerWidget {
       child: Row(
         children:
             categories.map((category) {
-              final isSelected = selected == category;
+              final isSelected = selected.toLowerCase() == category.toLowerCase();
 
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),

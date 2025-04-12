@@ -26,11 +26,18 @@ class NavigationScaffold extends ConsumerWidget {
       },
       if (isAdminOrOwner)
         {
+          'label': 'Inventory',
+          'icon': const Icon(Icons.inventory_2_outlined),
+          'route': '/inventory',
+        },
+      if (isAdminOrOwner)
+        {
           'label': 'Users',
           'icon': const Icon(Icons.group),
           'route': '/users',
         },
       {
+
         'label': 'Settings',
         'icon': const Icon(Icons.settings),
         'route': '/settings',
@@ -41,7 +48,7 @@ class NavigationScaffold extends ConsumerWidget {
     final selectedIndex = navItems.indexWhere((item) {
       final route = item['route'] as String;
       return location.startsWith(route);
-    });
+    }).clamp(0, navItems.length - 1);
 
     return Scaffold(
       body: Row(
