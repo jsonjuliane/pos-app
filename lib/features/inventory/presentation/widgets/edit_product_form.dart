@@ -39,9 +39,7 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
     final product = widget.initialProduct;
     _nameController = TextEditingController(text: product.name);
     _priceController = TextEditingController(text: product.price.toString());
-    _stockController = TextEditingController(
-      text: product.stockCount.toString(),
-    );
+    _stockController = TextEditingController();
     _categoryController = TextEditingController(text: product.category);
     _descriptionController = TextEditingController(text: product.description);
     _enabled = product.enabled;
@@ -62,10 +60,12 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
 
     setState(() => _isSaving = true); // Start loading
 
+    final addedStock = int.tryParse(_stockController.text.trim()) ?? 0;
+
     final product = NewProduct(
       name: _nameController.text.trim(),
       price: double.tryParse(_priceController.text.trim()) ?? 0,
-      stockCount: int.tryParse(_stockController.text.trim()) ?? 0,
+      stockCount: widget.initialProduct.stockCount + addedStock,
       enabled: _enabled,
       imageUrl: widget.initialProduct.imageUrl,
       category: _categoryController.text.trim(),
@@ -152,16 +152,17 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _stockController,
-              decoration: const InputDecoration(labelText: 'Stock Count'),
+              decoration: InputDecoration(
+                labelText: 'Add Stock',
+                helperText: 'Current Stock: ${widget.initialProduct.stockCount}',
+              ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (value) {
                 if (value == null || value.isEmpty) return 'Required';
-                final newStock = int.tryParse(value);
-                if (newStock == null) return 'Must be a valid number';
-                if (newStock < widget.initialProduct.stockCount) {
-                  return 'Stock count cannot be lower than current stock (${widget.initialProduct.stockCount})';
-                }
+                final addedStock = int.tryParse(value);
+                if (addedStock == null) return 'Must be a valid number';
+                if (addedStock < 0) return 'Cannot decrease stock';
                 return null;
               },
             ),
