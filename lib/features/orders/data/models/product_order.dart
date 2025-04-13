@@ -57,7 +57,7 @@ class ProductOrder {
       paymentAmount: (data['paymentAmount'] as num).toDouble(),
       totalAmount: (data['totalAmount'] as num).toDouble(),
       discountApplied: data['discountApplied'],
-      discountAmount: (data['discountAmount'] as num).toDouble(),
+      discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0.0,
       completed: data['completed'] ?? false, // Default false
       items: (data['items'] as List)
           .map((e) => OrderItem.fromMap(e as Map<String, dynamic>))

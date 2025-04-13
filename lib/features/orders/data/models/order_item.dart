@@ -4,6 +4,7 @@ class OrderItem {
   final double price;
   final int quantity;
   final double subtotal;
+  final double discount;
 
   OrderItem({
     required this.productId,
@@ -11,6 +12,7 @@ class OrderItem {
     required this.price,
     required this.quantity,
     required this.subtotal,
+    required this.discount,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class OrderItem {
       'price': price,
       'quantity': quantity,
       'subtotal': subtotal,
+      'discount': discount,
     };
   }
 
@@ -30,6 +33,7 @@ class OrderItem {
       price: (map['price'] as num).toDouble(),
       quantity: map['quantity'] as int,
       subtotal: (map['subtotal'] as num).toDouble(),
+      discount: (map['discount'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

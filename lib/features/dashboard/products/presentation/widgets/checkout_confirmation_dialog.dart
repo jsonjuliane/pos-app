@@ -306,6 +306,7 @@ Future<void> _handleCheckout({
               price: item.product.price,
               quantity: item.quantity,
               subtotal: item.totalPrice,
+              discount: discountAmount,
             );
           }).toList(),
       createdAt: DateTime.now(),

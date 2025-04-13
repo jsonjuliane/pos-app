@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../dashboard/cart/data/models/cart_item.dart';
 import '../../../dashboard/products/data/models/product.dart';
+import '../../../orders/data/models/product_order.dart';
 import '../../data/model/inventory_report.dart';
+import '../../data/model/sales_summary.dart';
 
 class ReportRepository {
   final _firestore = FirebaseFirestore.instance;
@@ -12,9 +15,9 @@ class ReportRepository {
         .doc(branchId)
         .collection('inventory_reports')
         .withConverter<InventoryReport>(
-      fromFirestore: (doc, _) => InventoryReport.fromDoc(doc),
-      toFirestore: (report, _) => report.toMap(),
-    );
+          fromFirestore: (doc, _) => InventoryReport.fromDoc(doc),
+          toFirestore: (report, _) => report.toMap(),
+        );
   }
 
   Future<void> createReport({
@@ -45,12 +48,16 @@ class ReportRepository {
     required String branchId,
     required DateTime date,
   }) async {
-    final query = await _reportCollection(branchId)
-        .where('date', isEqualTo: Timestamp.fromDate(
-      DateTime(date.year, date.month, date.day),
-    ))
-        .limit(1)
-        .get();
+    final query =
+        await _reportCollection(branchId)
+            .where(
+              'date',
+              isEqualTo: Timestamp.fromDate(
+                DateTime(date.year, date.month, date.day),
+              ),
+            )
+            .limit(1)
+            .get();
 
     if (query.docs.isEmpty) return null;
 
@@ -58,13 +65,87 @@ class ReportRepository {
   }
 
   Future<List<Product>> getProductsOnce({required String branchId}) async {
-    final snapshot = await _firestore
-        .collection('branches')
-        .doc(branchId)
-        .collection('products')
-        .get();
+    final snapshot =
+        await _firestore
+            .collection('branches')
+            .doc(branchId)
+            .collection('products')
+            .get();
 
     return snapshot.docs.map((doc) => Product.fromDoc(doc)).toList();
+  }
+
+  Future<SalesSummary> getSalesSummary({
+    required String branchId,
+    required DateTime date,
+  }) async {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    final query =
+        await _firestore
+            .collection('branches')
+            .doc(branchId)
+            .collection('orders')
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(dateOnly),
+            )
+            .where(
+              'createdAt',
+              isLessThan: Timestamp.fromDate(
+                dateOnly.add(const Duration(days: 1)),
+              ),
+            )
+            .get();
+
+    double grossSales = 0;
+    double totalDiscount = 0;
+    double paymentCollected = 0;
+    int totalItemsSold = 0;
+    final itemMap = <String, SalesSummaryItem>{};
+
+    for (final doc in query.docs) {
+      final order = ProductOrder.fromDoc(doc);
+
+      grossSales += order.totalAmount;
+      totalDiscount += order.discountAmount;
+      paymentCollected += order.paymentAmount;
+
+      for (final item in order.items) {
+        totalItemsSold += item.quantity;
+        final key = '${item.name}-${item.price}-${order.discountApplied}';
+
+        if (itemMap.containsKey(key)) {
+          final existing = itemMap[key]!;
+          itemMap[key] = SalesSummaryItem(
+            name: existing.name,
+            price: existing.price,
+            discounted: existing.discounted,
+            quantity: existing.quantity + item.quantity,
+            subtotal: existing.subtotal + item.subtotal,
+            discount: existing.discount,
+          );
+        } else {
+          itemMap[key] = SalesSummaryItem(
+            name: item.name,
+            price: item.price,
+            discounted: order.discountApplied,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+            discount: item.discount,
+          );
+        }
+      }
+    }
+
+    return SalesSummary(
+      grossSales: grossSales,
+      totalDiscount: totalDiscount,
+      netSales: grossSales - totalDiscount,
+      paymentCollected: paymentCollected,
+      totalItemsSold: totalItemsSold,
+      items: itemMap.values.toList(),
+    );
   }
 
   Future<void> updateStartAndEndInventoryOnOrder({
@@ -94,27 +175,28 @@ class ReportRepository {
     }
 
     if (report == null) {
-      await reportRef.set(InventoryReport(
-        id: '',
-        branchId: branchId,
-        date: today,
-        startInventory: startInventory,
-        addedInventory: {},
-        soldInventory: { // NEW
-          for (final item in cartItems) item.product.id: item.quantity,
-        },
-        endInventory: endInventory,
-        createdAt: now,
-        updatedAt: now,
-      ));
+      await reportRef.set(
+        InventoryReport(
+          id: '',
+          branchId: branchId,
+          date: today,
+          startInventory: startInventory,
+          addedInventory: {},
+          soldInventory: {
+            // NEW
+            for (final item in cartItems) item.product.id: item.quantity,
+          },
+          endInventory: endInventory,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
       return;
     }
 
     final batch = _firestore.batch();
 
-    final dataToUpdate = <String, dynamic>{
-      'updatedAt': now,
-    };
+    final dataToUpdate = <String, dynamic>{'updatedAt': now};
 
     // Only save startInventory if not existing
     for (final item in cartItems) {
@@ -141,5 +223,4 @@ class ReportRepository {
     batch.update(reportRef, dataToUpdate);
     await batch.commit();
   }
-
 }

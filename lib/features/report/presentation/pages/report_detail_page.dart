@@ -1,8 +1,16 @@
-import 'package:flutter/material.dart';
-import '../../../dashboard/products/data/models/product.dart';
-import '../../data/model/inventory_report.dart';
+import 'dart:typed_data'; // Correct import for Uint8List
 
-class ReportDetailPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
+import '../../../dashboard/products/data/models/product.dart';
+import '../../data/model/sales_summary.dart';
+import '../../data/model/inventory_report.dart';
+import '../../data/providers/report_repo_providers.dart';
+
+class ReportDetailPage extends ConsumerWidget {
   final InventoryReport report;
   final Map<String, Product> productMap;
 
@@ -13,12 +21,27 @@ class ReportDetailPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventory Report Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () async {
+              final salesSummary = await ref.read(reportRepoProvider).getSalesSummary(
+                branchId: report.branchId,
+                date: report.date,
+              );
+
+              await Printing.layoutPdf(
+                onLayout: (format) => _generatePdf(report, salesSummary),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -91,5 +114,66 @@ class ReportDetailPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<Uint8List> _generatePdf(InventoryReport report, SalesSummary summary) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Inventory Report - ${report.date.toLocal().toString().split(' ')[0]}', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 12),
+              pw.Text('Created At: ${report.createdAt}'),
+              pw.Text('Updated At: ${report.updatedAt}'),
+              pw.SizedBox(height: 16),
+              pw.Text('Inventory Breakdown:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 8),
+              pw.Table.fromTextArray(
+                headers: ['Product', 'Start', 'Add', 'Sold', 'End'],
+                data: report.startInventory.keys.map((productId) {
+                  final name = productMap[productId]?.name ?? 'Unknown';
+                  return [
+                    name,
+                    '${report.startInventory[productId] ?? 0}',
+                    '${report.addedInventory[productId] ?? 0}',
+                    '${report.soldInventory[productId] ?? 0}',
+                    '${report.endInventory[productId] ?? 0}',
+                  ];
+                }).toList(),
+              ),
+
+              pw.Text('Sales Summary', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 8),
+              pw.Text('Gross Sales: P${summary.grossSales.toStringAsFixed(2)}'),
+              pw.Text('Total Discount: P${summary.totalDiscount.toStringAsFixed(2)}'),
+              pw.Text('Net Sales: P${summary.netSales.toStringAsFixed(2)}'),
+              pw.Text('Payment Collected: P${summary.paymentCollected.toStringAsFixed(2)}'),
+              pw.Text('Items Sold: ${summary.totalItemsSold} pcs'),
+              pw.SizedBox(height: 12),
+
+              pw.Text('Itemized Sales:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Table.fromTextArray(
+                headers: ['Item', 'Price', 'Qty', 'Subtotal', 'Discount'],
+                data: summary.items.map((item) {
+                  return [
+                    item.name,
+                    'P${item.price.toStringAsFixed(2)}',
+                    item.quantity,
+                    'P${item.subtotal.toStringAsFixed(2)}',
+                    'P${item.discount.toStringAsFixed(2)}',
+                  ];
+                }).toList(),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
   }
 }
