@@ -38,6 +38,12 @@ class NavigationScaffold extends ConsumerWidget {
         },
       if (isAdminOrOwner)
         {
+          'label': 'Reports',
+          'icon': const Icon(Icons.insert_chart_outlined_rounded),
+          'route': '/reports',
+        },
+      if (isAdminOrOwner)
+        {
           'label': 'Users',
           'icon': const Icon(Icons.group),
           'route': '/users',
