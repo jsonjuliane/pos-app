@@ -57,32 +57,36 @@ class DeviceHelper {
       case DeviceType.web:
         return 1.1;
       case DeviceType.tabletLandscape:
-        if(screen == "ord"){
+        if (screen == "ord") {
           return 0.9;
-        }else {
+        } else if (screen == "rep") {
+          return 2.5;
+        } else {
           return 1.3;
         }
       case DeviceType.tabletPortrait:
-        if(screen == "inv") {
+        if (screen == "inv") {
           return 0.9;
-        }else if (screen == "ord"){
+        } else if (screen == "ord") {
           return 0.75;
-        }else{
+        } else if (screen == "rep") {
+          return 1.5;
+        } else {
           return 1.0;
         }
       case DeviceType.mobileLandscape:
-        if(screen == "inv") {
+        if (screen == "inv") {
           return 1.0;
-        }else{
+        } else {
           return 1.2;
         }
       case DeviceType.mobilePortrait:
       default:
-      if(screen == "inv") {
-        return 0.75;
-      }else{
-        return 0.85;
-      }
+        if (screen == "inv") {
+          return 0.75;
+        } else {
+          return 0.85;
+        }
     }
   }
 }

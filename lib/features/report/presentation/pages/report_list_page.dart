@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_app/features/report/data/providers/report_repo_providers.dart';
 
 import '../../../../../shared/utils/device_helper.dart';
-import '../../../../../shared/utils/ui_helpers.dart';
 import '../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../../dashboard/products/presentation/providers/selected_branch_provider.dart';
-import 'report_detail_page.dart';
 import '../../../inventory/presentation/widgets/inventory_report_card.dart';
 import '../../data/model/inventory_report.dart';
+import 'report_detail_page.dart';
 
 class ReportListPage extends ConsumerWidget {
   const ReportListPage({super.key});
@@ -53,7 +52,7 @@ class ReportListPage extends ConsumerWidget {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 childAspectRatio:
-                DeviceHelper.getChildAspectRatio(deviceType, "ord"),
+                DeviceHelper.getChildAspectRatio(deviceType, "rep"),
               ),
               itemBuilder: (context, index) {
                 return InventoryReportCard(
