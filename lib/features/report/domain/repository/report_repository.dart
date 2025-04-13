@@ -100,6 +100,9 @@ class ReportRepository {
         date: today,
         startInventory: startInventory,
         addedInventory: {},
+        soldInventory: { // NEW
+          for (final item in cartItems) item.product.id: item.quantity,
+        },
         endInventory: endInventory,
         createdAt: now,
         updatedAt: now,
@@ -113,11 +116,6 @@ class ReportRepository {
       'updatedAt': now,
     };
 
-    // Always update endInventory
-    endInventory.forEach((productId, stockCount) {
-      dataToUpdate['endInventory.$productId'] = stockCount;
-    });
-
     // Only save startInventory if not existing
     for (final item in cartItems) {
       final productId = item.product.id;
@@ -127,8 +125,50 @@ class ReportRepository {
       }
     }
 
+    // Always increment soldInventory
+    for (final item in cartItems) {
+      final productId = item.product.id;
+      final soldQty = item.quantity;
+
+      dataToUpdate['soldInventory.$productId'] = FieldValue.increment(soldQty);
+    }
+
+    // Always update endInventory
+    endInventory.forEach((productId, stockCount) {
+      dataToUpdate['endInventory.$productId'] = stockCount;
+    });
+
     batch.update(reportRef, dataToUpdate);
     await batch.commit();
   }
+
+  // Future<void> updateSoldInventoryOnOrder({
+  //   required String branchId,
+  //   required List<CartItem> cartItems,
+  // }) async {
+  //   final now = DateTime.now();
+  //   final today = DateTime(now.year, now.month, now.day);
+  //
+  //   final reportRef = _reportCollection(branchId).doc(today.toIso8601String());
+  //   final doc = await reportRef.get();
+  //
+  //   if (!doc.exists) return; // No report yet, skip
+  //
+  //   final batch = _firestore.batch();
+  //
+  //   final dataToUpdate = <String, dynamic>{
+  //     'updatedAt': now,
+  //   };
+  //
+  //   for (final item in cartItems) {
+  //     final productId = item.product.id;
+  //     final soldQuantity = item.quantity;
+  //
+  //     dataToUpdate['soldInventory.$productId'] = FieldValue.increment(soldQuantity);
+  //   }
+  //
+  //   batch.update(reportRef, dataToUpdate);
+  //   await batch.commit();
+  // }
 
 }

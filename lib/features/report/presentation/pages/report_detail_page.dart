@@ -42,6 +42,7 @@ class ReportDetailPage extends StatelessWidget {
             ...report.startInventory.keys.map((productId) {
               final start = report.startInventory[productId] ?? 0;
               final added = report.addedInventory[productId] ?? 0;
+              final sold = report.soldInventory[productId] ?? 0;
               final end = report.endInventory[productId] ?? 0;
               final productName = productMap[productId]?.name ?? 'Unknown Product';
 
@@ -54,6 +55,7 @@ class ReportDetailPage extends StatelessWidget {
                     children: [
                       _columnValue('Start', start),
                       _columnValue('Add', added),
+                      _columnValue('Sold', sold),
                       _columnValue('End', end),
                     ],
                   ),
