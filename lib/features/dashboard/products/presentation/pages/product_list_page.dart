@@ -268,7 +268,7 @@ class _ProductGrid extends StatelessWidget {
                     crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, false),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, false),
+                    childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, "prod"),
                   ),
                   itemBuilder: (context, index) {
                     return ProductCard(product: inStock[index]);
@@ -290,7 +290,7 @@ class _ProductGrid extends StatelessWidget {
                       crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, false),
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, false),
+                      childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, "prod"),
                     ),
                     itemBuilder: (context, index) {
                       return ProductCard(product: outOfStock[index]);

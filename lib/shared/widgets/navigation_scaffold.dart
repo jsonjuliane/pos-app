@@ -26,6 +26,12 @@ class NavigationScaffold extends ConsumerWidget {
       },
       if (isAdminOrOwner)
         {
+          'label': 'Orders',
+          'icon': const Icon(Icons.receipt_long),
+          'route': '/orders',
+        },
+      if (isAdminOrOwner)
+        {
           'label': 'Inventory',
           'icon': const Icon(Icons.inventory_2_outlined),
           'route': '/inventory',

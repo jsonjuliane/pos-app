@@ -28,8 +28,9 @@ Future<void> showCheckoutConfirmationDialog({
     }
 
     if (discountApplied && cartItems.isNotEmpty) {
-      final cheapestItem = cartItems.reduce((a, b) =>
-      a.product.price < b.product.price ? a : b);
+      final cheapestItem = cartItems.reduce(
+        (a, b) => a.product.price < b.product.price ? a : b,
+      );
       total -= cheapestItem.product.price * 0.12; // 12% off
     }
 
@@ -48,24 +49,27 @@ Future<void> showCheckoutConfirmationDialog({
           void setPayment(double value) {
             setState(() {
               paymentAmount = value;
-              controller.text = paymentAmount == 0 ? '' : paymentAmount.toStringAsFixed(0);
+              controller.text =
+                  paymentAmount == 0 ? '' : paymentAmount.toStringAsFixed(0);
             });
           }
 
           final originalTotal = cartItems.fold<double>(
             0,
-                (sum, item) => sum + item.product.price * item.quantity,
+            (sum, item) => sum + item.product.price * item.quantity,
           );
 
-          final discountedItem = cartItems.isNotEmpty
-              ? cartItems.reduce((a, b) =>
-          a.product.price < b.product.price ? a : b)
-              : null;
+          final discountedItem =
+              cartItems.isNotEmpty
+                  ? cartItems.reduce(
+                    (a, b) => a.product.price < b.product.price ? a : b,
+                  )
+                  : null;
 
           final discountAmount =
-          discountedItem != null && discountApplied
-              ? discountedItem.product.price * 0.12
-              : 0.0;
+              discountedItem != null && discountApplied
+                  ? discountedItem.product.price * 0.12
+                  : 0.0;
 
           final totalAfterDiscount = calculateTotal();
 
@@ -82,22 +86,21 @@ Future<void> showCheckoutConfirmationDialog({
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: defaultAmounts.map((amount) {
-                    return ChoiceChip(
-                      label: Text('₱$amount'),
-                      selected: false,
-                      onSelected: (_) {
-                        setPayment(amount.toDouble());
-                      },
-                    );
-                  }).toList(),
+                  children:
+                      defaultAmounts.map((amount) {
+                        return ChoiceChip(
+                          label: Text('₱$amount'),
+                          selected: false,
+                          onSelected: (_) {
+                            setPayment(amount.toDouble());
+                          },
+                        );
+                      }).toList(),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   keyboardType: TextInputType.name,
-                  decoration: const InputDecoration(
-                    labelText: 'Customer Name',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Customer Name'),
                   onChanged: (value) {
                     customerName = value;
                   },
@@ -125,9 +128,9 @@ Future<void> showCheckoutConfirmationDialog({
                   const SizedBox(height: 4),
                   Text(
                     '${discountedItem.product.name} '
-                        '₱${discountedItem.product.price.toStringAsFixed(2)} '
-                        '- ₱${discountAmount.toStringAsFixed(2)} '
-                        '= ₱${(discountedItem.product.price - discountAmount).toStringAsFixed(2)}',
+                    '₱${discountedItem.product.price.toStringAsFixed(2)} '
+                    '- ₱${discountAmount.toStringAsFixed(2)} '
+                    '= ₱${(discountedItem.product.price - discountAmount).toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                     ),
@@ -136,30 +139,34 @@ Future<void> showCheckoutConfirmationDialog({
                 ],
                 discountApplied
                     ? Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(text: 'Total: '),
-                      TextSpan(text: '₱${originalTotal.toStringAsFixed(2)} '),
-                      TextSpan(text: '- ₱${discountAmount.toStringAsFixed(2)} '),
-                      const TextSpan(text: '= '),
                       TextSpan(
-                        text: '₱${totalAfterDiscount.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        children: [
+                          const TextSpan(text: 'Total: '),
+                          TextSpan(
+                            text: '₱${originalTotal.toStringAsFixed(2)} ',
+                          ),
+                          TextSpan(
+                            text: '- ₱${discountAmount.toStringAsFixed(2)} ',
+                          ),
+                          const TextSpan(text: '= '),
+                          TextSpan(
+                            text: '₱${totalAfterDiscount.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
+                    )
                     : Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(text: 'Total: '),
                       TextSpan(
-                        text: '₱${originalTotal.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        children: [
+                          const TextSpan(text: 'Total: '),
+                          TextSpan(
+                            text: '₱${originalTotal.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
                 if (paymentAmount > 0) ...[
                   const SizedBox(height: 12),
                   Text.rich(
@@ -167,7 +174,8 @@ Future<void> showCheckoutConfirmationDialog({
                       children: [
                         const TextSpan(text: 'Change: '),
                         TextSpan(
-                          text: '₱${(paymentAmount - totalAfterDiscount).clamp(0, double.infinity).toStringAsFixed(2)}',
+                          text:
+                              '₱${(paymentAmount - totalAfterDiscount).clamp(0, double.infinity).toStringAsFixed(2)}',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
@@ -187,7 +195,9 @@ Future<void> showCheckoutConfirmationDialog({
                     discountApplied = !discountApplied;
                   });
                 },
-                child: Text(discountApplied ? 'Remove Discount' : 'Apply Discount'),
+                child: Text(
+                  discountApplied ? 'Remove Discount' : 'Apply Discount',
+                ),
               ),
               TextButton(
                 onPressed: () async {
@@ -209,27 +219,27 @@ Future<void> showCheckoutConfirmationDialog({
                 child: const Text('Pay Later'),
               ),
               ElevatedButton(
-                onPressed: paymentAmount >= totalAfterDiscount
-                    ? () async {
-                  await _handleCheckout(
-                    context: context,
-                    ref: ref,
-                    cartItems: cartItems,
-                    customerName: customerName,
-                    paymentAmount: paymentAmount,
-                    totalAfterDiscount: totalAfterDiscount,
-                    discountApplied: discountApplied,
-                    discountAmount: discountAmount,
-                    payLater: false,
-                  );
+                onPressed:
+                    paymentAmount >= totalAfterDiscount
+                        ? () async {
+                          await _handleCheckout(
+                            context: context,
+                            ref: ref,
+                            cartItems: cartItems,
+                            customerName: customerName,
+                            paymentAmount: paymentAmount,
+                            totalAfterDiscount: totalAfterDiscount,
+                            discountApplied: discountApplied,
+                            discountAmount: discountAmount,
+                            payLater: false,
+                          );
 
-                  Navigator.of(context).pop();
-                  onPay(paymentAmount, false);
-                }
-                    : null, // disables the button
+                          Navigator.of(context).pop();
+                          onPay(paymentAmount, false);
+                        }
+                        : null, // disables the button
                 child: const Text('Pay'),
               ),
-
             ],
           );
         },
@@ -280,30 +290,31 @@ Future<void> _handleCheckout({
 
     final order = ProductOrder(
       id: '',
+      customerName: customerName,
       branchId: branchId,
       paid: !payLater,
       paymentAmount: paymentAmount,
       totalAmount: totalAfterDiscount,
       discountApplied: discountApplied,
       discountAmount: discountAmount,
-      items: cartItems.map((item) {
-        return OrderItem(
-          productId: item.product.id,
-          customerName: customerName,
-          name: item.product.name,
-          price: item.product.price,
-          quantity: item.quantity,
-          subtotal: item.totalPrice,
-        );
-      }).toList(),
+      items:
+          cartItems.map((item) {
+            return OrderItem(
+              productId: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity,
+              subtotal: item.totalPrice,
+            );
+          }).toList(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      completed: false,
     );
 
-    await ref.read(orderRepoProvider).createOrder(
-      branchId: branchId,
-      order: order,
-    );
+    await ref
+        .read(orderRepoProvider)
+        .createOrder(branchId: branchId, order: order);
 
     ref.read(cartProvider.notifier).clear();
 
@@ -311,38 +322,40 @@ Future<void> _handleCheckout({
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Checkout Successful'),
-        content: const Text('Order has been placed successfully.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Checkout Successful'),
+            content: const Text('Order has been placed successfully.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.go('/orders');
+                },
+                child: const Text('Go to Orders'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.go('/orders');
-            },
-            child: const Text('Go to Orders'),
-          ),
-        ],
-      ),
     );
   } catch (e) {
     Navigator.of(context).pop(); // close loading
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Checkout Failed'),
-        content: Text('Error: $e'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Checkout Failed'),
+            content: Text('Error: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

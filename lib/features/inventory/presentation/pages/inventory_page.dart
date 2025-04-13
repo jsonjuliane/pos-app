@@ -217,7 +217,7 @@ class _InventoryContent extends ConsumerWidget {
                         crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, true),
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
-                        childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, true),
+                        childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, "inv"),
                       ),
                       itemBuilder: (context, index) {
                         final product = filteredProducts[index];
