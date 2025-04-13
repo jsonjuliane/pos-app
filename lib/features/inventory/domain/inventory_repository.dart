@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../shared/utils/error_handler.dart';
 import '../../dashboard/products/data/models/product.dart';
+import '../../report/data/model/inventory_report.dart';
 import '../data/model/category.dart';
 import '../data/model/new_product.dart';
 
@@ -69,8 +70,8 @@ class InventoryRepository {
     });
 
     if (addedStock > 0) {
-      final today = DateTime.now();
-      final dateOnly = DateTime(today.year, today.month, today.day);
+      final now = DateTime.now();
+      final dateOnly = DateTime(now.year, now.month, now.day);
       final reportRef = _firestore
           .collection('branches')
           .doc(branchId)
@@ -80,13 +81,27 @@ class InventoryRepository {
       final reportDoc = await reportRef.get();
 
       if (reportDoc.exists) {
-        final dataToUpdate = <String, dynamic>{
+        // Existing report → Update addedInventory & endInventory
+        batch.update(reportRef, {
           'addedInventory.$productId': FieldValue.increment(addedStock),
           'endInventory.$productId': FieldValue.increment(addedStock),
-          'updatedAt': DateTime.now(),
-        };
+          'updatedAt': now,
+        });
+      } else {
+        // No report yet → Create report with initial data
+        final newReport = InventoryReport(
+          id: '',
+          branchId: branchId,
+          date: dateOnly,
+          startInventory: {productId: currentStock},
+          addedInventory: {productId: addedStock.toInt()},
+          soldInventory: {productId: 0},
+          endInventory: {productId: currentStock + addedStock},
+          createdAt: now,
+          updatedAt: now,
+        );
 
-        batch.update(reportRef, dataToUpdate);
+        batch.set(reportRef, newReport.toMap());
       }
     }
 

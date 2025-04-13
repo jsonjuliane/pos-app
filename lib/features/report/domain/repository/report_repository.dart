@@ -142,33 +142,4 @@ class ReportRepository {
     await batch.commit();
   }
 
-  // Future<void> updateSoldInventoryOnOrder({
-  //   required String branchId,
-  //   required List<CartItem> cartItems,
-  // }) async {
-  //   final now = DateTime.now();
-  //   final today = DateTime(now.year, now.month, now.day);
-  //
-  //   final reportRef = _reportCollection(branchId).doc(today.toIso8601String());
-  //   final doc = await reportRef.get();
-  //
-  //   if (!doc.exists) return; // No report yet, skip
-  //
-  //   final batch = _firestore.batch();
-  //
-  //   final dataToUpdate = <String, dynamic>{
-  //     'updatedAt': now,
-  //   };
-  //
-  //   for (final item in cartItems) {
-  //     final productId = item.product.id;
-  //     final soldQuantity = item.quantity;
-  //
-  //     dataToUpdate['soldInventory.$productId'] = FieldValue.increment(soldQuantity);
-  //   }
-  //
-  //   batch.update(reportRef, dataToUpdate);
-  //   await batch.commit();
-  // }
-
 }
