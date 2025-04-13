@@ -45,21 +45,52 @@ class InventoryRepository {
     required String productId,
     required NewProduct product,
   }) async {
-    try {
-      await _firestore
+    final productRef = _firestore
+        .collection('branches')
+        .doc(branchId)
+        .collection('products')
+        .doc(productId);
+
+    final doc = await productRef.get();
+    final currentData = doc.data()!;
+    final currentStock = currentData['stockCount'] ?? 0;
+
+    final addedStock = product.stockCount - currentStock;
+
+    if (addedStock < 0) {
+      throw Exception('Cannot decrease stock count');
+    }
+
+    final batch = _firestore.batch();
+
+    batch.update(productRef, {
+      ...product.toMap(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    if (addedStock > 0) {
+      final today = DateTime.now();
+      final dateOnly = DateTime(today.year, today.month, today.day);
+      final reportRef = _firestore
           .collection('branches')
           .doc(branchId)
-          .collection('products')
-          .doc(productId)
-          .update({
-        ...product.toMap(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      throw Exception(mapFirestoreError(e));
-    } catch (e) {
-      throw Exception('Failed to add product. Please try again.');
+          .collection('inventory_reports')
+          .doc(dateOnly.toIso8601String());
+
+      final reportDoc = await reportRef.get();
+
+      if (reportDoc.exists) {
+        final dataToUpdate = <String, dynamic>{
+          'addedInventory.$productId': FieldValue.increment(addedStock),
+          'endInventory.$productId': FieldValue.increment(addedStock),
+          'updatedAt': DateTime.now(),
+        };
+
+        batch.update(reportRef, dataToUpdate);
+      }
     }
+
+    await batch.commit();
   }
 
   /// Deletes a product from a branch by ID.

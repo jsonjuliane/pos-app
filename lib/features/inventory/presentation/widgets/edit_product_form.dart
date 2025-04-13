@@ -157,8 +157,11 @@ class _EditProductFormState extends ConsumerState<EditProductForm> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (value) {
                 if (value == null || value.isEmpty) return 'Required';
-                if (int.tryParse(value) == null)
-                  return 'Must be a valid number';
+                final newStock = int.tryParse(value);
+                if (newStock == null) return 'Must be a valid number';
+                if (newStock < widget.initialProduct.stockCount) {
+                  return 'Stock count cannot be lower than current stock (${widget.initialProduct.stockCount})';
+                }
                 return null;
               },
             ),

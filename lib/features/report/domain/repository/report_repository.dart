@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../dashboard/cart/data/models/cart_item.dart';
+import '../../../dashboard/products/data/models/product.dart';
 import '../../data/model/inventory_report.dart';
 
 class ReportRepository {
@@ -55,53 +57,78 @@ class ReportRepository {
     return query.docs.first.data();
   }
 
-  Future<void> generateReport({
-    required String branchId,
-  }) async {
-    final now = DateTime.now();
-    final todayDateOnly = DateTime(now.year, now.month, now.day);
-
-    // Fetch existing report
-    final existingReport = await getReportByDate(
-      branchId: branchId,
-      date: todayDateOnly,
-    );
-
-    // Fetch products
-    final productSnapshot = await _firestore
+  Future<List<Product>> getProductsOnce({required String branchId}) async {
+    final snapshot = await _firestore
         .collection('branches')
         .doc(branchId)
         .collection('products')
         .get();
 
+    return snapshot.docs.map((doc) => Product.fromDoc(doc)).toList();
+  }
+
+  Future<void> updateStartAndEndInventoryOnOrder({
+    required String branchId,
+    required List<CartItem> cartItems,
+  }) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final reportRef = _reportCollection(branchId).doc(today.toIso8601String());
+
+    final doc = await reportRef.get();
+    final report = doc.data(); // InventoryReport from .withConverter
+
     final startInventory = <String, int>{};
     final endInventory = <String, int>{};
 
-    for (final doc in productSnapshot.docs) {
-      final data = doc.data();
-      startInventory[doc.id] = data['stockCount'] ?? 0;
-      endInventory[doc.id] = data['stockCount'] ?? 0;
+    for (final item in cartItems) {
+      final productId = item.product.id;
+
+      endInventory[productId] = item.product.stockCount - item.quantity;
+
+      // If report doesn't exist yet, startInventory is stockCount now
+      if (report == null) {
+        startInventory[productId] = item.product.stockCount;
+      }
     }
 
-    final report = InventoryReport(
-      id: existingReport?.id ?? '',
-      branchId: branchId,
-      date: todayDateOnly,
-      startInventory: startInventory,
-      addedInventory: existingReport?.addedInventory ?? {},
-      endInventory: endInventory,
-      createdAt: existingReport?.createdAt ?? now,
-      updatedAt: now,
-    );
-
-    if (existingReport == null) {
-      await createReport(branchId: branchId, report: report);
-    } else {
-      await updateReport(
+    if (report == null) {
+      await reportRef.set(InventoryReport(
+        id: '',
         branchId: branchId,
-        reportId: existingReport.id,
-        data: report.toMap(),
-      );
+        date: today,
+        startInventory: startInventory,
+        addedInventory: {},
+        endInventory: endInventory,
+        createdAt: now,
+        updatedAt: now,
+      ));
+      return;
     }
+
+    final batch = _firestore.batch();
+
+    final dataToUpdate = <String, dynamic>{
+      'updatedAt': now,
+    };
+
+    // Always update endInventory
+    endInventory.forEach((productId, stockCount) {
+      dataToUpdate['endInventory.$productId'] = stockCount;
+    });
+
+    // Only save startInventory if not existing
+    for (final item in cartItems) {
+      final productId = item.product.id;
+
+      if (!report.startInventory.containsKey(productId)) {
+        dataToUpdate['startInventory.$productId'] = item.product.stockCount;
+      }
+    }
+
+    batch.update(reportRef, dataToUpdate);
+    await batch.commit();
   }
+
 }

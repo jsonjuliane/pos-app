@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../../dashboard/products/data/models/product.dart';
 import '../../data/model/inventory_report.dart';
 
 class ReportDetailPage extends StatelessWidget {
   final InventoryReport report;
+  final Map<String, Product> productMap;
 
-  const ReportDetailPage({super.key, required this.report});
+  const ReportDetailPage({
+    super.key,
+    required this.report,
+    required this.productMap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +43,12 @@ class ReportDetailPage extends StatelessWidget {
               final start = report.startInventory[productId] ?? 0;
               final added = report.addedInventory[productId] ?? 0;
               final end = report.endInventory[productId] ?? 0;
+              final productName = productMap[productId]?.name ?? 'Unknown Product';
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
-                  title: Text('Product ID: $productId'),
+                  title: Text(productName), // Product Name here
                   subtitle: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

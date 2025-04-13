@@ -58,13 +58,21 @@ class ReportListPage extends ConsumerWidget {
               itemBuilder: (context, index) {
                 return InventoryReportCard(
                   report: reports[index],
-                  onTap: () {
+                  onTap: () async {
+                    // Fetch products once
+                    final products = await ref
+                        .read(reportRepoProvider)
+                        .getProductsOnce(branchId: branchId); // Add this in your repo if not yet
+
+                    final productMap = {for (var p in products) p.id: p};
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
                             ReportDetailPage(
                               report: reports[index],
+                              productMap: productMap,
                             ),
                       ),
                     );
@@ -75,80 +83,6 @@ class ReportListPage extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add_chart),
-        label: const Text('Generate Report'),
-        onPressed: () async {
-          await _handleGenerateReport(context, ref, branchId);
-        },
-      ),
     );
-  }
-
-  Future<void> _handleGenerateReport(
-      BuildContext context, WidgetRef ref, String branchId) async {
-
-    final repo = ref.read(reportRepoProvider);
-
-    // Show initial loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-
-    try {
-      final now = DateTime.now();
-      final existingReport = await repo.getReportByDate(
-        branchId: branchId,
-        date: DateTime(now.year, now.month, now.day),
-      );
-
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-
-      // Ask for overwrite confirmation if report already exists
-      if (existingReport != null) {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Overwrite Report?'),
-            content: const Text('Report for today already exists. Overwrite?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context, rootNavigator: true).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
-                child: const Text('Overwrite'),
-              ),
-            ],
-          ),
-        );
-
-        if (confirmed != true) return;
-      }
-
-      // Show loading again for report generation
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      await repo.generateReport(branchId: branchId);
-
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-
-      showSuccessSnackBar(context, 'Report generated!');
-    } catch (e) {
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-
-      showErrorSnackBar(context, 'Failed to generate report.');
-    }
   }
 }

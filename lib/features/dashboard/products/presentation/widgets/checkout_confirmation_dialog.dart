@@ -7,6 +7,7 @@ import 'package:pos_app/features/orders/data/models/product_order.dart';
 import '../../../../../shared/utils/ui_helpers.dart';
 import '../../../../orders/data/models/order_item.dart';
 import '../../../../orders/data/providers/order_repo_providers.dart';
+import '../../../../report/data/providers/report_repo_providers.dart';
 import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../providers/selected_branch_provider.dart';
@@ -312,9 +313,15 @@ Future<void> _handleCheckout({
       completed: false,
     );
 
-    await ref
-        .read(orderRepoProvider)
-        .createOrder(branchId: branchId, order: order);
+    await ref.read(reportRepoProvider).updateStartAndEndInventoryOnOrder(
+      branchId: branchId,
+      cartItems: cartItems,
+    );
+
+    await ref.read(orderRepoProvider).createOrder(
+      branchId: branchId,
+      order: order,
+    );
 
     ref.read(cartProvider.notifier).clear();
 
