@@ -208,7 +208,7 @@ Future<void> showCheckoutConfirmationDialog({
                     cartItems: cartItems,
                     customerName: customerName,
                     paymentAmount: paymentAmount,
-                    totalAfterDiscount: totalAfterDiscount,
+                    total: originalTotal,
                     discountApplied: discountApplied,
                     discountAmount: discountAmount,
                     payLater: true,
@@ -229,7 +229,7 @@ Future<void> showCheckoutConfirmationDialog({
                             cartItems: cartItems,
                             customerName: customerName,
                             paymentAmount: paymentAmount,
-                            totalAfterDiscount: totalAfterDiscount,
+                            total: originalTotal,
                             discountApplied: discountApplied,
                             discountAmount: discountAmount,
                             payLater: false,
@@ -255,7 +255,7 @@ Future<void> _handleCheckout({
   required List<CartItem> cartItems,
   required String customerName,
   required double paymentAmount,
-  required double totalAfterDiscount,
+  required double total,
   required bool discountApplied,
   required double discountAmount,
   required bool payLater,
@@ -289,26 +289,32 @@ Future<void> _handleCheckout({
 
     await batch.commit();
 
+    final cheapestItem = cartItems.isNotEmpty
+        ? cartItems.reduce((a, b) => a.product.price < b.product.price ? a : b)
+        : null;
+
     final order = ProductOrder(
       id: '',
       customerName: customerName,
       branchId: branchId,
       paid: !payLater,
       paymentAmount: paymentAmount,
-      totalAmount: totalAfterDiscount,
+      totalAmount: total,
       discountApplied: discountApplied,
       discountAmount: discountAmount,
-      items:
-          cartItems.map((item) {
-            return OrderItem(
-              productId: item.product.id,
-              name: item.product.name,
-              price: item.product.price,
-              quantity: item.quantity,
-              subtotal: item.totalPrice,
-              discount: discountAmount,
-            );
-          }).toList(),
+      items: cartItems.map((item) {
+        final isDiscounted = discountApplied && item.product.id == cheapestItem?.product.id;
+        final itemDiscount = isDiscounted ? item.product.price * 0.12 : 0.0;
+
+        return OrderItem(
+          productId: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          quantity: item.quantity,
+          subtotal: item.totalPrice,
+          discount: itemDiscount,
+        );
+      }).toList(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       completed: false,

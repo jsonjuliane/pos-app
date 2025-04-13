@@ -1,6 +1,7 @@
 // inventory/data/repositories/inventory_repository.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../shared/utils/error_handler.dart';
 import '../../dashboard/products/data/models/product.dart';
 import '../../report/data/model/inventory_report.dart';
@@ -19,7 +20,10 @@ class InventoryRepository {
         .collection('products')
         .orderBy('createdAt', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Product.fromDoc(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Product.fromDoc(doc)).toList(),
+        );
   }
 
   /// Adds a new product under the given branch.
@@ -81,12 +85,26 @@ class InventoryRepository {
       final reportDoc = await reportRef.get();
 
       if (reportDoc.exists) {
-        // Existing report → Update addedInventory & endInventory
-        batch.update(reportRef, {
+        final reportData = reportDoc.data()!;
+        final hasStartInventory =
+            (reportData['startInventory'] as Map<String, dynamic>?)
+                ?.containsKey(productId) ??
+            false;
+
+        final reportUpdateData = {
           'addedInventory.$productId': FieldValue.increment(addedStock),
           'endInventory.$productId': FieldValue.increment(addedStock),
           'updatedAt': now,
-        });
+        };
+
+        // If productId does not exist yet in startInventory → save currentStock
+        if (!hasStartInventory) {
+          reportUpdateData['startInventory.$productId'] = currentStock;
+          reportUpdateData['addedInventory.$productId'] = addedStock;
+          reportUpdateData['endInventory.$productId'] = currentStock + addedStock;
+        }
+
+        batch.update(reportRef, reportUpdateData);
       } else {
         // No report yet → Create report with initial data
         final newReport = InventoryReport(
@@ -135,7 +153,10 @@ class InventoryRepository {
         .collection('categories')
         .orderBy('name')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Category.fromDoc(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Category.fromDoc(doc)).toList(),
+        );
   }
 
   /// Adds a category from a branch by ID.
@@ -147,10 +168,7 @@ class InventoryRepository {
         .collection('branches')
         .doc(branchId)
         .collection('categories')
-        .add({
-      'name': name,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+        .add({'name': name, 'createdAt': FieldValue.serverTimestamp()});
   }
 
   /// Deletes a category by ID under a specific branch.

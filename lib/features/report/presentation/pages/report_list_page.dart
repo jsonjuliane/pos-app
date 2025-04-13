@@ -21,9 +21,7 @@ class ReportListPage extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final reportsStream = ref
-        .watch(reportRepoProvider)
-        .getReports(branchId);
+    final reportsStream = ref.watch(reportRepoProvider).getReports(branchId);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reports')),
@@ -43,43 +41,49 @@ class ReportListPage extends ConsumerWidget {
           return reports.isEmpty
               ? const Center(child: Text('No reports available'))
               : Padding(
-            padding: const EdgeInsets.all(16),
-            child: GridView.builder(
-              itemCount: reports.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount:
-                DeviceHelper.getCrossAxisCount(deviceType, true),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio:
-                DeviceHelper.getChildAspectRatio(deviceType, "rep"),
-              ),
-              itemBuilder: (context, index) {
-                return InventoryReportCard(
-                  report: reports[index],
-                  onTap: () async {
-                    // Fetch products once
-                    final products = await ref
-                        .read(reportRepoProvider)
-                        .getProductsOnce(branchId: branchId); // Add this in your repo if not yet
+                padding: const EdgeInsets.all(16),
+                child: GridView.builder(
+                  itemCount: reports.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: DeviceHelper.getCrossAxisCount(
+                      deviceType,
+                      true,
+                    ),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: DeviceHelper.getChildAspectRatio(
+                      deviceType,
+                      "rep",
+                    ),
+                  ),
+                  itemBuilder: (context, index) {
+                    return InventoryReportCard(
+                      report: reports[index],
+                      onTap: () async {
+                        // Fetch products once
+                        final products = await ref
+                            .read(reportRepoProvider)
+                            .getProductsOnce(
+                              branchId: branchId,
+                            ); // Add this in your repo if not yet
 
-                    final productMap = {for (var p in products) p.id: p};
+                        final productMap = {for (var p in products) p.id: p};
 
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            ReportDetailPage(
-                              report: reports[index],
-                              productMap: productMap,
-                            ),
-                      ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (_) => ReportDetailPage(
+                                  report: reports[index],
+                                  productMap: productMap,
+                                ),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          );
+                ),
+              );
         },
       ),
     );

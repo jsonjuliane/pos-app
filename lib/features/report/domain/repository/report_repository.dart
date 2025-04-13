@@ -123,7 +123,7 @@ class ReportRepository {
             discounted: existing.discounted,
             quantity: existing.quantity + item.quantity,
             subtotal: existing.subtotal + item.subtotal,
-            discount: existing.discount,
+            discount: existing.discount + item.discount,
           );
         } else {
           itemMap[key] = SalesSummaryItem(
