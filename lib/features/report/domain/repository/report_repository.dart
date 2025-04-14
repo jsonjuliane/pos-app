@@ -118,6 +118,7 @@ class ReportRepository {
         if (itemMap.containsKey(key)) {
           final existing = itemMap[key]!;
           itemMap[key] = SalesSummaryItem(
+            productId: existing.productId.toString(),
             name: existing.name,
             price: existing.price,
             discounted: existing.discounted,
@@ -127,6 +128,7 @@ class ReportRepository {
           );
         } else {
           itemMap[key] = SalesSummaryItem(
+            productId: item.productId,
             name: item.name,
             price: item.price,
             discounted: order.discountApplied,
