@@ -123,19 +123,33 @@ class ReportDetailPage extends ConsumerWidget {
       SalesSummary summary,
       ) async {
     final pdf = pw.Document();
+    final dateFormatter = DateFormat('yyyy-MM-dd hh:mm a');
 
-    // Calculate totals for itemized sales table
-    final totalSubtotal = summary.items.fold<double>(
-      0,
-          (sum, item) => sum + item.subtotal,
-    );
-    final totalDiscount = summary.items.fold<double>(
-      0,
-          (sum, item) => sum + item.discount,
-    );
+    // Group items by (name + price)
+    final groupedItems = <String, Map<String, dynamic>>{};
+
+    for (final item in summary.items) {
+      final key = '${item.name}-${item.price}';
+      if (groupedItems.containsKey(key)) {
+        groupedItems[key]!['quantity'] += item.quantity;
+        groupedItems[key]!['subtotal'] += item.subtotal;
+        groupedItems[key]!['discount'] += item.discount;
+      } else {
+        groupedItems[key] = {
+          'name': item.name,
+          'price': item.price,
+          'quantity': item.quantity,
+          'subtotal': item.subtotal,
+          'discount': item.discount,
+        };
+      }
+    }
+
+    final totalSubtotal = groupedItems.values
+        .fold<double>(0, (sum, item) => sum + item['subtotal']);
+    final totalDiscount = groupedItems.values
+        .fold<double>(0, (sum, item) => sum + item['discount']);
     final totalFinal = totalSubtotal - totalDiscount;
-
-    final dateFormatter = DateFormat('yyyy-MM-dd hh:mm a'); // e.g. 2025-04-14 03:45 PM
 
     pdf.addPage(
       pw.MultiPage(
@@ -148,8 +162,8 @@ class ReportDetailPage extends ConsumerWidget {
 
           pw.Text('Created At: ${dateFormatter.format(report.createdAt.toLocal())}'),
           pw.Text('Updated At: ${dateFormatter.format(report.updatedAt.toLocal())}'),
-          pw.SizedBox(height: 16),
 
+          pw.SizedBox(height: 16),
           pw.Text('Inventory Breakdown:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 8),
 
@@ -173,17 +187,18 @@ class ReportDetailPage extends ConsumerWidget {
 
           pw.Table.fromTextArray(
             headers: ['Item', 'Price', 'Qty', 'Subtotal', 'Discount', 'Total'],
-            data: summary.items.map((item) {
+            data: groupedItems.values.map((item) {
+              final total = item['subtotal'] - item['discount'];
               return [
-                item.name,
-                'P${item.price.toStringAsFixed(2)}',
-                item.quantity,
-                'P${item.subtotal.toStringAsFixed(2)}',
-                'P${item.discount.toStringAsFixed(2)}',
-                'P${(item.subtotal - item.discount).toStringAsFixed(2)}',
+                item['name'],
+                'P${item['price'].toStringAsFixed(2)}',
+                '${item['quantity']}',
+                'P${item['subtotal'].toStringAsFixed(2)}',
+                'P${item['discount'].toStringAsFixed(2)}',
+                'P${total.toStringAsFixed(2)}',
               ];
             }).toList()
-              ..add([ // Totals Row
+              ..add([
                 'TOTAL',
                 '',
                 '',
@@ -204,21 +219,12 @@ class ReportDetailPage extends ConsumerWidget {
               1: pw.FlexColumnWidth(2),
             },
             children: [
-              pw.TableRow(children: [
-                pw.Text('Items Sold:'),
-                pw.Text('${summary.totalItemsSold} pcs', textAlign: pw.TextAlign.right),
-              ]),
-              pw.TableRow(children: [
-                pw.Text('Gross Sales:'),
-                pw.Text('P${summary.grossSales.toStringAsFixed(2)}', textAlign: pw.TextAlign.right),
-              ]),
-              pw.TableRow(children: [
-                pw.Text('Total Discount:'),
-                pw.Text('P${summary.totalDiscount.toStringAsFixed(2)}', textAlign: pw.TextAlign.right),
-              ]),
+              _summaryRow('Items Sold:', '${summary.totalItemsSold} pcs'),
+              _summaryRow('Gross Sales:', 'P${summary.grossSales.toStringAsFixed(2)}'),
+              _summaryRow('Total Discount:', 'P${summary.totalDiscount.toStringAsFixed(2)}'),
               pw.TableRow(children: [
                 pw.Container(
-                  color: PdfColors.grey300, // Light grey background
+                  color: PdfColors.grey300,
                   padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                   child: pw.Text('Net Sales:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 ),
@@ -227,17 +233,11 @@ class ReportDetailPage extends ConsumerWidget {
                   padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                   child: pw.Text(
                     'P${summary.netSales.toStringAsFixed(2)}',
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                    ),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                     textAlign: pw.TextAlign.right,
                   ),
                 ),
               ]),
-              // pw.TableRow(children: [
-              //   pw.Text('Payment Collected:'),
-              //   pw.Text('P${summary.paymentCollected.toStringAsFixed(2)}', textAlign: pw.TextAlign.right),
-              // ]),
             ],
           ),
         ],
