@@ -1,19 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/models/cart_item.dart';
 import '../../products/data/models/product.dart';
+import '../data/models/cart_item.dart';
 
-/// Manages the cart state globally using a list of [CartItem].
-/// Allows adding, removing, and clearing items from the cart.
+/// Manages the cart state locally using a list of [CartItem].
+/// Only performs local stock checking when adding/removing items.
+/// Firestore stock update happens only on Checkout.
 class CartNotifier extends StateNotifier<List<CartItem>> {
   CartNotifier() : super([]);
 
-  /// Adds a product to the cart. If already present, increments quantity.
-  void add(Product product) {
+  /// Adds a product to the cart.
+  /// Checks against product.stockCount for available stock.
+  void add(Product product, {required void Function(String message) onError}) {
     final index = state.indexWhere((item) => item.product.id == product.id);
+    final existingQuantity = index == -1 ? 0 : state[index].quantity;
+
+    if (existingQuantity >= product.stockCount) {
+      onError('Out of stock');
+      return;
+    }
+
     if (index == -1) {
       state = [...state, CartItem(product: product, quantity: 1)];
     } else {
-      final updated = state[index].copyWithQuantity(state[index].quantity + 1);
+      final updated = state[index].copyWithQuantity(existingQuantity + 1);
       state = [
         ...state.sublist(0, index),
         updated,
@@ -29,6 +38,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     if (index == -1) return;
 
     final current = state[index];
+
     if (current.quantity == 1) {
       state = [
         ...state.sublist(0, index),
@@ -44,6 +54,6 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     }
   }
 
-  /// Clears the entire cart
+  /// Clears the entire cart (used after successful checkout)
   void clear() => state = [];
 }

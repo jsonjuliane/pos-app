@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../../data/models/product.dart';
 
-/// A product card that:
-/// - Adds product to cart on tap
-/// - Removes one from cart on long press
-/// - Shows fallback image if `imageUrl` is empty
 class ProductCard extends ConsumerWidget {
   final Product product;
 
@@ -17,64 +14,132 @@ class ProductCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartProvider);
     final cartItem = cart.firstWhere(
-          (item) => item.product.id == product.id,
+      (item) => item.product.id == product.id,
       orElse: () => CartItem(product: product, quantity: 0),
     );
 
-    final hasImage = product.imageUrl.isNotEmpty;
-    final defaultImage = 'assets/images/special_wow_seafood.jpg';
+    final theme = Theme.of(context);
+    final isOutOfStockOrDisabled = product.stockCount == 0 || !product.enabled;
 
-    return GestureDetector(
-      onTap: () => ref.read(cartProvider.notifier).add(product),
-      onLongPress: () => ref.read(cartProvider.notifier).remove(product),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            children: [
-              // Image section (asset or network fallback)
-              Expanded(
-                child: hasImage
-                    ? Image.network(product.imageUrl, fit: BoxFit.contain)
-                    : Image.asset(defaultImage, fit: BoxFit.contain),
-              ),
-              const SizedBox(height: 8),
-
-              // Product name
-              Text(
-                product.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+    return Opacity(
+      opacity: isOutOfStockOrDisabled ? 0.4 : 1,
+      child: GestureDetector(
+        onTap:
+            () => ref
+                .read(cartProvider.notifier)
+                .add(
+                  product,
+                  onError: (msg) {
+                    //TODO: Do something if needed
+                  },
                 ),
-              ),
-
-              // Price display
-              Text(
-                '₱${product.price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+        onLongPress: () => ref.read(cartProvider.notifier).remove(product),
+        child: Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Name
+                Text(
+                  product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
 
-              // Cart quantity display
-              Text(
-                cartItem.quantity > 0
-                    ? 'In cart: ${cartItem.quantity}'
-                    : 'Tap to add • Long press to remove',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: cartItem.quantity > 0
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
+                if (product.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    product.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.hintColor,
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 8),
+
+                Text(
+                  product.category,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '₱${product.price.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Stock: ${product.stockCount}',
+                        style: theme.textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.stockCount > 0 ? 'In Stock' : 'Out of Stock',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: product.stockCount > 0
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        product.enabled ? 'Enabled' : 'Disabled',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: product.enabled
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  cartItem.quantity > 0
+                      ? 'In cart: ${cartItem.quantity}'
+                      : 'Tap to add • Long press to remove',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color:
+                        cartItem.quantity > 0
+                            ? theme.colorScheme.primary
+                            : theme.hintColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

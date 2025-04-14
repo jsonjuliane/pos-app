@@ -214,10 +214,10 @@ class _InventoryContent extends ConsumerWidget {
                         : GridView.builder(
                       itemCount: filteredProducts.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType),
+                        crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, true),
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
-                        childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType),
+                        childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, "inv"),
                       ),
                       itemBuilder: (context, index) {
                         final product = filteredProducts[index];

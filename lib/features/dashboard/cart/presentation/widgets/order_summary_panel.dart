@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../shared/utils/ui_helpers.dart';
+import '../../../products/presentation/widgets/checkout_confirmation_dialog.dart';
 import '../../data/models/cart_item.dart';
 import '../providers/cart_providers.dart';
 
@@ -15,7 +17,7 @@ class OrderSummaryPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final total = selectedItems.fold<double>(
       0,
-          (sum, item) => sum + item.totalPrice,
+      (sum, item) => sum + item.totalPrice,
     );
 
     return SafeArea(
@@ -54,7 +56,8 @@ class OrderSummaryPanel extends ConsumerWidget {
                               children: [
                                 // Name + Subtotal (aligned)
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       item.product.name,
@@ -92,15 +95,22 @@ class OrderSummaryPanel extends ConsumerWidget {
                           Column(
                             children: [
                               IconButton(
-                                onPressed: () => ref
-                                    .read(cartProvider.notifier)
-                                    .remove(item.product),
+                                onPressed:
+                                    () => ref
+                                        .read(cartProvider.notifier)
+                                        .remove(item.product),
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
                               IconButton(
-                                onPressed: () => ref
-                                    .read(cartProvider.notifier)
-                                    .add(item.product),
+                                onPressed:
+                                    () => ref
+                                        .read(cartProvider.notifier)
+                                        .add(
+                                          item.product,
+                                          onError: (msg) {
+                                            //TODO: Do something if needed
+                                          },
+                                        ),
                                 icon: const Icon(Icons.add_circle_outline),
                               ),
                             ],
@@ -127,7 +137,10 @@ class OrderSummaryPanel extends ConsumerWidget {
                     children: [
                       const Text(
                         'Total:',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '₱${total.toStringAsFixed(2)}',
@@ -149,12 +162,31 @@ class OrderSummaryPanel extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (selectedItems.isEmpty) {
+                              showErrorSnackBar(
+                                context,
+                                'Cart is empty. Please add items first.',
+                              );
+                              return;
+                            }
+
+                            showCheckoutConfirmationDialog(
+                              context: context,
+                              ref: ref,
+                              cartItems: selectedItems,
+                              onPay: (paymentAmount, payLater) {
+                                // TODO: Handle payment logic
+                                print('Payment Amount: $paymentAmount');
+                                print('Pay Later? $payLater');
+                              },
+                            );
+                          },
                           child: Text('Checkout'),
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),

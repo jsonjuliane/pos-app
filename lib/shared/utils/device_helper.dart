@@ -32,12 +32,16 @@ class DeviceHelper {
         : DeviceType.mobileLandscape;
   }
 
-  static int getCrossAxisCount(DeviceType type) {
+  static int getCrossAxisCount(DeviceType type, bool wide) {
     switch (type) {
       case DeviceType.web:
         return 5;
       case DeviceType.tabletLandscape:
-        return 4;
+        if (wide) {
+          return 4;
+        } else {
+          return 3;
+        }
       case DeviceType.tabletPortrait:
         return 3;
       case DeviceType.mobileLandscape:
@@ -48,19 +52,41 @@ class DeviceHelper {
     }
   }
 
-  static double getChildAspectRatio(DeviceType type) {
+  static double getChildAspectRatio(DeviceType type, String screen) {
     switch (type) {
       case DeviceType.web:
         return 1.1;
       case DeviceType.tabletLandscape:
-        return 1.3;
+        if (screen == "ord") {
+          return 0.9;
+        } else if (screen == "rep") {
+          return 2.5;
+        } else {
+          return 1.3;
+        }
       case DeviceType.tabletPortrait:
-        return 0.9;
+        if (screen == "inv") {
+          return 0.9;
+        } else if (screen == "ord") {
+          return 0.75;
+        } else if (screen == "rep") {
+          return 1.5;
+        } else {
+          return 1.0;
+        }
       case DeviceType.mobileLandscape:
-        return 1.0;
+        if (screen == "inv") {
+          return 1.0;
+        } else {
+          return 1.2;
+        }
       case DeviceType.mobilePortrait:
       default:
-        return 0.75;
+        if (screen == "inv") {
+          return 0.75;
+        } else {
+          return 0.85;
+        }
     }
   }
 }

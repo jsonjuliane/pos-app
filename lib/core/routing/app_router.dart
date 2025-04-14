@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/dashboard/products/presentation/pages/product_list_page.dart';
 import '../../features/inventory/presentation/pages/inventory_page.dart';
+import '../../features/report/presentation/pages/report_list_page.dart';
+import '../../features/orders/presentation/pages/order_list_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/user_management/presentation/pages/user_management_page.dart';
 import '../../shared/widgets/navigation_scaffold.dart';
@@ -43,9 +45,19 @@ class AppRouter {
             builder: (context, state) => const ProductListPage(),
           ),
           GoRoute(
+            path: '/orders',
+            name: 'orders',
+            builder: (context, state) => const OrderListPage(),
+          ),
+          GoRoute(
             path: '/inventory',
             name: 'inventory',
             builder: (context, state) => const InventoryPage(),
+          ),
+          GoRoute(
+            path: '/reports',
+            name: 'inventory-reports',
+            builder: (context, state) => const ReportListPage(),
           ),
           GoRoute(
             path: '/users',
