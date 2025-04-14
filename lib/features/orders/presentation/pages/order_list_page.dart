@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../shared/utils/device_helper.dart';
+import '../../../../shared/utils/error_handler.dart';
 import '../../../../shared/utils/ui_helpers.dart';
+import '../../../../shared/widgets/error_message_widget.dart';
+import '../../../../shared/widgets/select_branch_dialog.dart';
 import '../../../auth/presentation/providers/auth_user_providers.dart';
 import '../../../dashboard/products/presentation/providers/selected_branch_provider.dart';
+import '../../../user_management/data/providers/branch_provider.dart';
 import '../../data/models/product_order.dart';
 import '../../data/providers/order_repo_providers.dart';
 import 'order_detail_page.dart';
@@ -16,9 +20,58 @@ class OrderListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final branchId = ref.watch(selectedBranchIdProvider);
-    final userAsync = ref.watch(authUserProvider);
+    final authUserAsync = ref.watch(authUserProvider);
+    final selectedBranchId = ref.watch(selectedBranchIdProvider);
 
-    if (branchId == null || userAsync.isLoading) {
+    if (authUserAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (authUserAsync.hasError) {
+      return ErrorMessageWidget(
+        message: mapFirestoreError(authUserAsync.error),
+        onRetry: () => ref.refresh(authUserProvider),
+      );
+    }
+
+    final user = authUserAsync.value!;
+
+    // Auto-assign branch for non-owner with branchId
+    if (user.role != 'owner' &&
+        user.branchId != null &&
+        selectedBranchId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(selectedBranchIdProvider.notifier).set(user.branchId!);
+      });
+    }
+
+    // Owner with no selected branch -> show SelectBranchDialog
+    if (user.role == 'owner' && selectedBranchId == null) {
+      final branchesAsync = ref.watch(allBranchesProvider);
+      return Center(
+        child: ElevatedButton(
+          onPressed:
+              branchesAsync.isLoading
+                  ? null
+                  : () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const SelectBranchDialog(),
+                    );
+                  },
+          child:
+              branchesAsync.isLoading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Select Branch'),
+        ),
+      );
+    }
+
+    if (branchId == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -35,6 +88,19 @@ class OrderListPage extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Orders'),
+          actions: [
+            if (user.role == 'owner')
+              IconButton(
+                tooltip: 'Change Branch',
+                icon: const Icon(Icons.swap_horiz),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const SelectBranchDialog(),
+                  );
+                },
+              ),
+          ],
           bottom: const TabBar(
             tabs: [Tab(text: 'Ongoing'), Tab(text: 'Completed')],
           ),
@@ -151,47 +217,60 @@ class _OrderCardState extends ConsumerState<OrderCard> {
               Text('Items: ${order.items.length}'),
               Text('Paid: ${order.paid ? 'Yes' : 'Pay Later'}'),
               Text('Subtotal: ₱${order.totalAmount.toStringAsFixed(2)}'),
-              order.discountApplied? Text('Discount: -₱${order.discountAmount}', style: const TextStyle(fontWeight: FontWeight.w600)): Text('Discount: No'),
-              Text('Total: ₱${(order.totalAmount - order.discountAmount).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
-              Text('Payment Amount: ₱${order.paymentAmount.toStringAsFixed(2)}'),
-              Text('Change: ₱${(order.paymentAmount - (order.totalAmount - order.discountAmount)).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+              order.discountApplied
+                  ? Text(
+                    'Discount: -₱${order.discountAmount}',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  )
+                  : Text('Discount: No'),
+              Text(
+                'Total: ₱${(order.totalAmount - order.discountAmount).toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              Text(
+                'Payment Amount: ₱${order.paymentAmount.toStringAsFixed(2)}',
+              ),
+              Text(
+                'Change: ₱${(order.paymentAmount - (order.totalAmount - order.discountAmount)).toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               const Spacer(),
 
-                ElevatedButton(
-                  onPressed:
-                      order.paid || _isLoadingPaid
-                          ? null
-                          : () async {
+              ElevatedButton(
+                onPressed:
+                    order.paid || _isLoadingPaid
+                        ? null
+                        : () async {
+                          setState(() {
+                            _isLoadingPaid = true;
+                          });
+                          try {
+                            await orderRepo.markAsPaid(
+                              branchId: branchId,
+                              orderId: order.id,
+                            );
+                          } catch (e) {
+                            showErrorSnackBar(
+                              context,
+                              'Failed to mark as paid',
+                            );
+                          } finally {
                             setState(() {
-                              _isLoadingPaid = true;
+                              _isLoadingPaid = false;
                             });
-                            try {
-                              await orderRepo.markAsPaid(
-                                branchId: branchId,
-                                orderId: order.id,
-                              );
-                            } catch (e) {
-                              showErrorSnackBar(
-                                context,
-                                'Failed to mark as paid',
-                              );
-                            } finally {
-                              setState(() {
-                                _isLoadingPaid = false;
-                              });
-                            }
-                          },
-                  child:
-                      _isLoadingPaid
-                          ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : order.paid
-                          ? const Text('Paid')
-                          : const Text('Mark as Paid'),
-                ),
+                          }
+                        },
+                child:
+                    _isLoadingPaid
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : order.paid
+                        ? const Text('Paid')
+                        : const Text('Mark as Paid'),
+              ),
 
               ElevatedButton(
                 onPressed:
