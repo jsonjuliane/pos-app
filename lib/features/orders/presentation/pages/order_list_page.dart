@@ -219,7 +219,7 @@ class _OrderCardState extends ConsumerState<OrderCard> {
               Text('Subtotal: ₱${order.totalAmount.toStringAsFixed(2)}'),
               order.discountApplied
                   ? Text(
-                    'Discount: -₱${order.discountAmount}',
+                    'Discount: -₱${order.discountAmount.toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   )
                   : Text('Discount: No'),
