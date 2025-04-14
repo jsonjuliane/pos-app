@@ -8,8 +8,12 @@ class Product {
   /// Display name of the product
   final String name;
 
-  /// Price per unit
-  final double price;
+  /// Optional list of price variants (only used if [hasPriceVariants] is true)
+  ///
+  /// Example use case:
+  /// - Quarter / Half / Whole sizes
+  /// - Small / Medium / Large options
+  final List<PriceVariant> prices;
 
   /// Category used for filtering (e.g., 'Snack', 'Platter')
   final String category;
@@ -35,7 +39,7 @@ class Product {
   const Product({
     required this.id,
     required this.name,
-    required this.price,
+    required this.prices,
     required this.category,
     required this.stockCount,
     required this.enabled,
@@ -45,6 +49,10 @@ class Product {
     required this.updatedAt,
   });
 
+  bool get hasPriceVariants => prices.length > 1;
+
+  double get price => prices.first.price;
+
   /// Creates a Product object from a Firestore document.
   factory Product.fromDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -52,7 +60,9 @@ class Product {
     return Product(
       id: doc.id,
       name: data['name'] ?? '',
-      price: (data['price'] ?? 0).toDouble(),
+      prices: (data['prices'] as List<dynamic>? ?? [])
+          .map((e) => PriceVariant.fromMap(e as Map<String, dynamic>))
+          .toList(),
       category: data['category'] ?? '',
       stockCount: data['stockCount'] ?? 0,
       enabled: data['enabled'] ?? false,
@@ -61,5 +71,35 @@ class Product {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+}
+
+/// Represents a single price variant for a product.
+class PriceVariant {
+  /// Name of the variant (e.g., 'Quarter', 'Half', 'Whole')
+  final String name;
+
+  /// Price of this variant
+  final double price;
+
+  const PriceVariant({
+    required this.name,
+    required this.price,
+  });
+
+  /// Creates a PriceVariant from Firestore map data.
+  factory PriceVariant.fromMap(Map<String, dynamic> map) {
+    return PriceVariant(
+      name: map['name'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+    );
+  }
+
+  /// Converts PriceVariant to a map for Firestore storage.
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'price': price,
+    };
   }
 }
