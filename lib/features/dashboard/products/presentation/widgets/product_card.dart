@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_app/features/dashboard/products/presentation/widgets/variant_selector_dialog.dart';
 
 import '../../../cart/data/models/cart_item.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
@@ -14,25 +15,33 @@ class ProductCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartProvider);
     final cartItem = cart.firstWhere(
-      (item) => item.product.id == product.id,
+          (item) => item.product.id == product.id,
       orElse: () => CartItem(product: product, quantity: 0),
     );
 
     final theme = Theme.of(context);
     final isOutOfStockOrDisabled = product.stockCount == 0 || !product.enabled;
 
+    // Format prices
+    final priceDisplay = product.prices
+        .map((p) => '₱${p.price.toStringAsFixed(0)}')
+        .join(' / ');
+
     return Opacity(
       opacity: isOutOfStockOrDisabled ? 0.4 : 1,
       child: GestureDetector(
-        onTap:
-            () => ref
-                .read(cartProvider.notifier)
-                .add(
-                  product,
-                  onError: (msg) {
-                    //TODO: Do something if needed
-                  },
-                ),
+        onTap: () {
+          if (product.hasPriceVariants) {
+            showDialog(
+              context: context,
+              builder: (_) => VariantSelectorDialog(product: product),
+            );
+          } else {
+            ref.read(cartProvider.notifier).add(product, onError: (msg) {
+              // TODO: Optional error handling
+            });
+          }
+        },
         onLongPress: () => ref.read(cartProvider.notifier).remove(product),
         child: Card(
           elevation: 3,
@@ -45,7 +54,7 @@ class ProductCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product Name
+                /// Product Name
                 Text(
                   product.name,
                   maxLines: 1,
@@ -55,6 +64,7 @@ class ProductCard extends ConsumerWidget {
                   ),
                 ),
 
+                /// Optional Description
                 if (product.description.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -69,6 +79,7 @@ class ProductCard extends ConsumerWidget {
 
                 const SizedBox(height: 8),
 
+                /// Category
                 Text(
                   product.category,
                   maxLines: 1,
@@ -80,30 +91,24 @@ class ProductCard extends ConsumerWidget {
 
                 const SizedBox(height: 8),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '₱${product.price.toStringAsFixed(2)}',
-                        style: theme.textTheme.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Stock: ${product.stockCount}',
-                        style: theme.textTheme.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                /// Prices
+                Text(
+                  priceDisplay,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+
                 const SizedBox(height: 4),
+
+                /// Stock & Enabled Status
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        product.stockCount > 0 ? 'In Stock' : 'Out of Stock',
+                        product.stockCount > 0
+                            ? 'Stock: ${product.stockCount}'
+                            : 'Out of Stock',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: product.stockCount > 0
                               ? theme.colorScheme.primary
@@ -125,17 +130,19 @@ class ProductCard extends ConsumerWidget {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 4),
+
+                /// Cart Info
                 Text(
                   cartItem.quantity > 0
                       ? 'In cart: ${cartItem.quantity}'
                       : 'Tap to add • Long press to remove',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color:
-                        cartItem.quantity > 0
-                            ? theme.colorScheme.primary
-                            : theme.hintColor,
+                    color: cartItem.quantity > 0
+                        ? theme.colorScheme.primary
+                        : theme.hintColor,
                   ),
                 ),
               ],

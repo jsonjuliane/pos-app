@@ -2,16 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../products/data/models/product.dart';
 import '../data/models/cart_item.dart';
 
-/// Manages the cart state locally using a list of [CartItem].
-/// Only performs local stock checking when adding/removing items.
-/// Firestore stock update happens only on Checkout.
+/// Manages local cart state. Handles quantity and duplicate variant logic.
 class CartNotifier extends StateNotifier<List<CartItem>> {
   CartNotifier() : super([]);
 
-  /// Adds a product to the cart.
-  /// Checks against product.stockCount for available stock.
+  /// Adds a product to the cart. Differentiates based on product ID + price.
   void add(Product product, {required void Function(String message) onError}) {
-    final index = state.indexWhere((item) => item.product.id == product.id);
+    final index = state.indexWhere(
+          (item) => item.product.id == product.id && item.product.price == product.price,
+    );
+
     final existingQuantity = index == -1 ? 0 : state[index].quantity;
 
     if (existingQuantity >= product.stockCount) {
@@ -31,15 +31,15 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     }
   }
 
-  /// Removes one quantity of a product from the cart.
-  /// If quantity reaches zero, removes the product.
+  /// Removes one quantity of the selected variant of a product.
   void remove(Product product) {
-    final index = state.indexWhere((item) => item.product.id == product.id);
+    final index = state.indexWhere(
+          (item) => item.product.id == product.id && item.product.price == product.price,
+    );
     if (index == -1) return;
 
     final current = state[index];
-
-    if (current.quantity == 1) {
+    if (current.quantity <= 1) {
       state = [
         ...state.sublist(0, index),
         ...state.sublist(index + 1),
@@ -54,6 +54,6 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     }
   }
 
-  /// Clears the entire cart (used after successful checkout)
+  /// Clears the entire cart.
   void clear() => state = [];
 }

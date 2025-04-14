@@ -17,7 +17,7 @@ class OrderSummaryPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final total = selectedItems.fold<double>(
       0,
-      (sum, item) => sum + item.totalPrice,
+          (sum, item) => sum + item.totalPrice,
     );
 
     return SafeArea(
@@ -31,7 +31,6 @@ class OrderSummaryPanel extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Scrollable cart item list
             if (selectedItems.isEmpty)
               const Expanded(child: Center(child: Text('Cart is empty')))
             else
@@ -41,7 +40,8 @@ class OrderSummaryPanel extends ConsumerWidget {
                   separatorBuilder: (_, __) => const Divider(height: 12),
                   itemBuilder: (context, index) {
                     final item = selectedItems[index];
-                    final unitPrice = item.product.price;
+                    final product = item.product;
+                    final unitPrice = product.price;
                     final subtotal = item.totalPrice;
 
                     return Padding(
@@ -54,13 +54,15 @@ class OrderSummaryPanel extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Name + Subtotal (aligned)
+                                // Name + Subtotal
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      item.product.name,
+                                      product.name +
+                                          (product.hasPriceVariants
+                                              ? ' (${product.prices.first.name})'
+                                              : ''),
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
@@ -76,8 +78,6 @@ class OrderSummaryPanel extends ConsumerWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 4),
-
-                                // Quantity and unit price
                                 Text(
                                   'x${item.quantity} • ₱${unitPrice.toStringAsFixed(2)} each',
                                   style: const TextStyle(
@@ -95,22 +95,15 @@ class OrderSummaryPanel extends ConsumerWidget {
                           Column(
                             children: [
                               IconButton(
-                                onPressed:
-                                    () => ref
-                                        .read(cartProvider.notifier)
-                                        .remove(item.product),
+                                onPressed: () =>
+                                    ref.read(cartProvider.notifier).remove(product),
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
                               IconButton(
-                                onPressed:
-                                    () => ref
-                                        .read(cartProvider.notifier)
-                                        .add(
-                                          item.product,
-                                          onError: (msg) {
-                                            //TODO: Do something if needed
-                                          },
-                                        ),
+                                onPressed: () =>
+                                    ref.read(cartProvider.notifier).add(product, onError: (msg) {
+                                      //TODO: Do something if needed
+                                    },),
                                 icon: const Icon(Icons.add_circle_outline),
                               ),
                             ],
@@ -156,7 +149,7 @@ class OrderSummaryPanel extends ConsumerWidget {
                           onPressed: () {
                             ref.read(cartProvider.notifier).clear();
                           },
-                          child: Text('Clear Cart'),
+                          child: const Text('Clear Cart'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -176,13 +169,12 @@ class OrderSummaryPanel extends ConsumerWidget {
                               ref: ref,
                               cartItems: selectedItems,
                               onPay: (paymentAmount, payLater) {
-                                // TODO: Handle payment logic
-                                print('Payment Amount: $paymentAmount');
-                                print('Pay Later? $payLater');
+                                // Payment callback logic
+                                print('Paid: ₱$paymentAmount • Pay Later: $payLater');
                               },
                             );
                           },
-                          child: Text('Checkout'),
+                          child: const Text('Checkout'),
                         ),
                       ),
                     ],
