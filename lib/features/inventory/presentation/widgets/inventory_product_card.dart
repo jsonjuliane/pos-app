@@ -25,119 +25,116 @@ class InventoryProductCard extends StatelessWidget {
         minHeight: 180,
         maxHeight: width >= 300 ? 300 : double.infinity, // Tablet/Web vs Mobile
       ),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product Name
-                  Text(
-                    product.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (product.description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+      child: InkWell(
+        onTap: () {
+          onEdit();
+        },
+        onLongPress: () {
+          onDelete();
+        },
+        child: Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product Name
                     Text(
-                      product.description,
-                      maxLines: 2,
+                      product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (product.description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        product.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      product.category,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.hintColor,
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    product.category,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.hintColor,
+                    const SizedBox(height: 8),
+                    // Price & Stock Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '₱${product.price.toStringAsFixed(2)}',
+                            style: theme.textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Stock: ${product.stockCount}',
+                            style: theme.textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Price & Stock Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '₱${product.price.toStringAsFixed(2)}',
-                          style: theme.textTheme.bodyMedium,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Stock: ${product.stockCount}',
-                          style: theme.textTheme.bodyMedium,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  // In Stock & Enabled Row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.stockCount > 0 ? 'In Stock' : 'Out of Stock',
-                          style: TextStyle(
-                            color:
-                                product.stockCount > 0
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.error,
-                            fontWeight: FontWeight.w600,
+                    const SizedBox(height: 4),
+                    // In Stock & Enabled Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.stockCount > 0
+                                ? 'In Stock'
+                                : 'Out of Stock',
+                            style: TextStyle(
+                              color:
+                                  product.stockCount > 0
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          product.enabled ? 'Enabled' : 'Disabled',
-                          style: TextStyle(
-                            color:
-                                product.enabled
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.error,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Text(
+                            product.enabled ? 'Enabled' : 'Disabled',
+                            style: TextStyle(
+                              color:
+                                  product.enabled
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton.icon(
-                          onPressed: onEdit,
-                          icon: const Icon(Icons.edit, size: 18),
-                          label: const Text('Edit'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: theme.colorScheme.onSurface,
-                            backgroundColor: theme.colorScheme.surfaceVariant,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      if (isOwner) ...[
-                        const SizedBox(width: 8),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
                         Expanded(
                           child: TextButton.icon(
-                            onPressed: onDelete,
-                            icon: const Icon(Icons.delete, size: 18),
-                            label: const Text('Delete'),
+                            onPressed: onEdit,
+                            icon: const Icon(Icons.edit, size: 18),
+                            label: const Text('Edit'),
                             style: TextButton.styleFrom(
                               foregroundColor: theme.colorScheme.onSurface,
                               backgroundColor: theme.colorScheme.surfaceVariant,
@@ -145,13 +142,31 @@ class InventoryProductCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (isOwner) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextButton.icon(
+                              onPressed: onDelete,
+                              icon: const Icon(Icons.delete, size: 18),
+                              label: const Text('Delete'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.onSurface,
+                                backgroundColor:
+                                    theme.colorScheme.surfaceVariant,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

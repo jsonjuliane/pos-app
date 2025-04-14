@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../products/data/models/product.dart';
 
-/// Represents a product added to the cart, with quantity.
+/// Represents a product added to the cart, with quantity and price variant.
 @immutable
 class CartItem {
-  /// The associated product
+  /// The associated product, including the selected price variant (single variant in [product.prices])
   final Product product;
 
-  /// How many of this product are in the cart
+  /// Quantity of this variant in the cart
   final int quantity;
 
   const CartItem({
@@ -15,7 +15,7 @@ class CartItem {
     required this.quantity,
   });
 
-  /// Returns a new copy of the item with updated quantity.
+  /// Returns a copy of this item with the updated quantity.
   CartItem copyWithQuantity(int newQuantity) {
     return CartItem(
       product: product,
@@ -23,6 +23,17 @@ class CartItem {
     );
   }
 
-  /// Computes total price based on quantity × product price
+  /// Total = quantity × selected variant price
   double get totalPrice => quantity * product.price;
+
+  /// Used for comparison: same product ID and same selected price variant
+  @override
+  bool operator ==(Object other) {
+    return other is CartItem &&
+        other.product.id == product.id &&
+        other.product.price == product.price;
+  }
+
+  @override
+  int get hashCode => Object.hash(product.id, product.price);
 }
