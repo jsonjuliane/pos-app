@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../../shared/utils/device_helper.dart';
 import '../../../../shared/utils/error_handler.dart';
@@ -193,6 +194,9 @@ class _OrderCardState extends ConsumerState<OrderCard> {
     final order = widget.order;
     final branchId = widget.branchId;
 
+    // Calculate order number using hour and minute (12-hour format)
+    final orderNumber = DateFormat('hmm').format(order.createdAt.toLocal());
+
     return Card(
       elevation: 3,
       child: InkWell(
@@ -212,6 +216,14 @@ class _OrderCardState extends ConsumerState<OrderCard> {
                 style: Theme.of(
                   context,
                 ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              // Order Number (derived from creation time)
+              Text(
+                'Order #$orderNumber',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text('Items: ${order.items.length}'),

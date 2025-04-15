@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../data/models/product_order.dart';
 
 class OrderDetailPage extends StatelessWidget {
@@ -10,6 +11,9 @@ class OrderDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // Calculate order number using hour and minute (12-hour format)
+    final orderNumber = DateFormat('hmm').format(order.createdAt.toLocal());
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order Details'),
@@ -19,12 +23,16 @@ class OrderDetailPage extends StatelessWidget {
         child: ListView(
           children: [
             Text(
-              'Order ID: ${order.id}',
+              'Customer Name: ${order.customerName}',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
-              'Customer Name: ${order.id}',
+              'Order #$orderNumber',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              'Order ID: ${order.id}',
+              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             _infoRow('Created At:', order.createdAt.toLocal().toString()),
