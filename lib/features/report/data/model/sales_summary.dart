@@ -17,6 +17,7 @@ class SalesSummary {
 }
 
 class SalesSummaryItem {
+  final String productId;
   final String name;
   final double price;
   final bool discounted;
@@ -25,6 +26,7 @@ class SalesSummaryItem {
   final double discount;
 
   SalesSummaryItem({
+    required this.productId,
     required this.name,
     required this.price,
     required this.discounted,
