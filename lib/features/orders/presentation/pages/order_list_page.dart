@@ -15,6 +15,9 @@ import '../../data/models/product_order.dart';
 import '../../data/providers/order_repo_providers.dart';
 import 'order_detail_page.dart';
 
+/// A provider to hold the current order search query.
+final orderSearchProvider = StateProvider<String>((ref) => '');
+
 class OrderListPage extends ConsumerWidget {
   const OrderListPage({super.key});
 
@@ -27,7 +30,6 @@ class OrderListPage extends ConsumerWidget {
     if (authUserAsync.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     if (authUserAsync.hasError) {
       return ErrorMessageWidget(
         message: mapFirestoreError(authUserAsync.error),
@@ -36,38 +38,33 @@ class OrderListPage extends ConsumerWidget {
     }
 
     final user = authUserAsync.value!;
-
-    // Auto-assign branch for non-owner with branchId
-    if (user.role != 'owner' &&
-        user.branchId != null &&
-        selectedBranchId == null) {
+    // Auto-assign branch for non-owner users if not selected.
+    if (user.role != 'owner' && user.branchId != null && selectedBranchId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(selectedBranchIdProvider.notifier).set(user.branchId!);
       });
     }
 
-    // Owner with no selected branch -> show SelectBranchDialog
+    // Owner with no selected branch: show branch selector.
     if (user.role == 'owner' && selectedBranchId == null) {
       final branchesAsync = ref.watch(allBranchesProvider);
       return Center(
         child: ElevatedButton(
-          onPressed:
-              branchesAsync.isLoading
-                  ? null
-                  : () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => const SelectBranchDialog(),
-                    );
-                  },
-          child:
-              branchesAsync.isLoading
-                  ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                  : const Text('Select Branch'),
+          onPressed: branchesAsync.isLoading
+              ? null
+              : () {
+            showDialog(
+              context: context,
+              builder: (_) => const SelectBranchDialog(),
+            );
+          },
+          child: branchesAsync.isLoading
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+              : const Text('Select Branch'),
         ),
       );
     }
@@ -76,13 +73,13 @@ class OrderListPage extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final ordersStream =
-        FirebaseFirestore.instance
-            .collection('branches')
-            .doc(branchId)
-            .collection('orders')
-            .orderBy('createdAt', descending: true)
-            .snapshots();
+    // Listen for orders stream.
+    final ordersStream = FirebaseFirestore.instance
+        .collection('branches')
+        .doc(branchId)
+        .collection('orders')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
 
     return DefaultTabController(
       length: 2,
@@ -116,18 +113,56 @@ class OrderListPage extends ConsumerWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final orders =
-                snapshot.data!.docs
-                    .map((doc) => ProductOrder.fromDoc(doc))
-                    .toList();
+            // Convert Firestore docs to ProductOrder list.
+            final orders = snapshot.data!.docs
+                .map((doc) => ProductOrder.fromDoc(doc))
+                .toList();
 
-            final ongoingOrders = orders.where((o) => !o.completed).toList();
-            final completedOrders = orders.where((o) => o.completed).toList();
+            // Retrieve current search query.
+            final searchQuery =
+            ref.watch(orderSearchProvider).trim().toLowerCase();
 
-            return TabBarView(
+            // Filter orders by customer name or order number (derived from creation time).
+            final filteredOrders = orders.where((order) {
+              final customerName = order.customerName.toLowerCase();
+              // Compute order number using a 12-hour format, e.g. 401 for 4:01 PM.
+              final orderNumber = DateFormat('hmm').format(order.createdAt.toLocal());
+              return customerName.contains(searchQuery) ||
+                  orderNumber.contains(searchQuery);
+            }).toList();
+
+            // Split into ongoing and completed orders.
+            final ongoingOrders =
+            filteredOrders.where((o) => !o.completed).toList();
+            final completedOrders =
+            filteredOrders.where((o) => o.completed).toList();
+
+            // Build the search field and TabBarView inside a Column.
+            return Column(
               children: [
-                _OrderGrid(orders: ongoingOrders, branchId: branchId),
-                _OrderGrid(orders: completedOrders, branchId: branchId),
+                // Search Field
+                // Padding(
+                //   padding: const EdgeInsets.all(16),
+                //   child: TextField(
+                //     decoration: const InputDecoration(
+                //       labelText: 'Search by Customer Name or Order Number',
+                //       prefixIcon: Icon(Icons.search),
+                //       border: OutlineInputBorder(),
+                //     ),
+                //     onChanged: (value) {
+                //       ref.read(orderSearchProvider.notifier).state = value;
+                //     },
+                //   ),
+                // ),
+                // Expanded TabBarView for orders.
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _OrderGrid(orders: ongoingOrders, branchId: branchId),
+                      _OrderGrid(orders: completedOrders, branchId: branchId),
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -137,6 +172,7 @@ class OrderListPage extends ConsumerWidget {
   }
 }
 
+/// Grid view for displaying a list of orders.
 class _OrderGrid extends StatelessWidget {
   final List<ProductOrder> orders;
   final String branchId;
@@ -146,34 +182,27 @@ class _OrderGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deviceType = DeviceHelper.getDeviceType(context);
-
     return Padding(
       padding: const EdgeInsets.all(16),
-      child:
-          orders.isEmpty
-              ? const Center(child: Text('No orders'))
-              : GridView.builder(
-                itemCount: orders.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: DeviceHelper.getCrossAxisCount(
-                    deviceType,
-                    true,
-                  ),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: DeviceHelper.getChildAspectRatio(
-                    deviceType,
-                    "ord",
-                  ),
-                ),
-                itemBuilder: (context, index) {
-                  return OrderCard(order: orders[index], branchId: branchId);
-                },
-              ),
+      child: orders.isEmpty
+          ? const Center(child: Text('No orders'))
+          : GridView.builder(
+        itemCount: orders.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, true),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, "ord"),
+        ),
+        itemBuilder: (context, index) {
+          return OrderCard(order: orders[index], branchId: branchId);
+        },
+      ),
     );
   }
 }
 
+/// A card widget that displays order information.
 class OrderCard extends ConsumerStatefulWidget {
   final ProductOrder order;
   final String branchId;
@@ -213,17 +242,19 @@ class _OrderCardState extends ConsumerState<OrderCard> {
             children: [
               Text(
                 'Customer: ${order.customerName}',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               // Order Number (derived from creation time)
               Text(
                 'Order #$orderNumber',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text('Items: ${order.items.length}'),
@@ -231,10 +262,10 @@ class _OrderCardState extends ConsumerState<OrderCard> {
               Text('Subtotal: ₱${order.totalAmount.toStringAsFixed(2)}'),
               order.discountApplied
                   ? Text(
-                    'Discount: -₱${order.discountAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  )
-                  : Text('Discount: No'),
+                'Discount: -₱${order.discountAmount.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              )
+                  : const Text('Discount: No'),
               Text(
                 'Total: ₱${(order.totalAmount - order.discountAmount).toStringAsFixed(2)}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
@@ -247,77 +278,57 @@ class _OrderCardState extends ConsumerState<OrderCard> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const Spacer(),
-
               ElevatedButton(
-                onPressed:
-                    order.paid || _isLoadingPaid
-                        ? null
-                        : () async {
-                          setState(() {
-                            _isLoadingPaid = true;
-                          });
-                          try {
-                            await orderRepo.markAsPaid(
-                              branchId: branchId,
-                              orderId: order.id,
-                            );
-                          } catch (e) {
-                            showErrorSnackBar(
-                              context,
-                              'Failed to mark as paid',
-                            );
-                          } finally {
-                            setState(() {
-                              _isLoadingPaid = false;
-                            });
-                          }
-                        },
-                child:
-                    _isLoadingPaid
-                        ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : order.paid
-                        ? const Text('Paid')
-                        : const Text('Mark as Paid'),
+                onPressed: order.paid || _isLoadingPaid
+                    ? null
+                    : () async {
+                  setState(() => _isLoadingPaid = true);
+                  try {
+                    await orderRepo.markAsPaid(
+                      branchId: branchId,
+                      orderId: order.id,
+                    );
+                  } catch (e) {
+                    showErrorSnackBar(context, 'Failed to mark as paid');
+                  } finally {
+                    setState(() => _isLoadingPaid = false);
+                  }
+                },
+                child: _isLoadingPaid
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : order.paid
+                    ? const Text('Paid')
+                    : const Text('Mark as Paid'),
               ),
-
               ElevatedButton(
-                onPressed:
-                    order.completed || !order.paid || _isLoadingCompleted
-                        ? null
-                        : () async {
-                          setState(() {
-                            _isLoadingCompleted = true;
-                          });
-                          try {
-                            await orderRepo.markAsCompleted(
-                              branchId: branchId,
-                              orderId: order.id,
-                            );
-                          } catch (e) {
-                            showErrorSnackBar(
-                              context,
-                              'Failed to mark as completed',
-                            );
-                          } finally {
-                            setState(() {
-                              _isLoadingCompleted = false;
-                            });
-                          }
-                        },
-                child:
-                    _isLoadingCompleted
-                        ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : order.completed
-                        ? const Text('Completed')
-                        : const Text('Complete'),
+                onPressed: order.completed || !order.paid || _isLoadingCompleted
+                    ? null
+                    : () async {
+                  setState(() => _isLoadingCompleted = true);
+                  try {
+                    await orderRepo.markAsCompleted(
+                      branchId: branchId,
+                      orderId: order.id,
+                    );
+                  } catch (e) {
+                    showErrorSnackBar(context, 'Failed to mark as completed');
+                  } finally {
+                    setState(() => _isLoadingCompleted = false);
+                  }
+                },
+                child: _isLoadingCompleted
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : order.completed
+                    ? const Text('Completed')
+                    : const Text('Complete'),
               ),
             ],
           ),
