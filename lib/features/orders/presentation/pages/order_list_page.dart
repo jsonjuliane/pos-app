@@ -304,6 +304,7 @@ class _OrderCardState extends ConsumerState<OrderCard> {
                     ? const Text('Paid')
                     : const Text('Mark as Paid'),
               ),
+              const Spacer(),
               ElevatedButton(
                 onPressed: order.completed || !order.paid || _isLoadingCompleted
                     ? null
