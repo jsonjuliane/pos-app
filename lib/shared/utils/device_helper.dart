@@ -55,7 +55,15 @@ class DeviceHelper {
   static double getChildAspectRatio(DeviceType type, String screen) {
     switch (type) {
       case DeviceType.web:
-        return 1.1;
+        if (screen == "ord") {
+          return 0.85;
+        } else if (screen == "inv") {
+          return 1.25;
+        } else if (screen == "rep") {
+          return 2.5;
+        }else {
+          return 0.8;
+        }
       case DeviceType.tabletLandscape:
         if (screen == "ord") {
           return 0.875;
@@ -81,7 +89,7 @@ class DeviceHelper {
           return 2.35;
         } else if (screen == "ord") {
           return 0.75;
-        }else {
+        } else {
           return 1.2;
         }
       case DeviceType.mobilePortrait:
