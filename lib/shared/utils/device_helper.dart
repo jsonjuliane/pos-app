@@ -58,7 +58,7 @@ class DeviceHelper {
         return 1.1;
       case DeviceType.tabletLandscape:
         if (screen == "ord") {
-          return 0.9;
+          return 0.875;
         } else if (screen == "rep") {
           return 2.5;
         } else {
@@ -68,7 +68,7 @@ class DeviceHelper {
         if (screen == "inv") {
           return 0.9;
         } else if (screen == "ord") {
-          return 0.75;
+          return 0.675;
         } else if (screen == "rep") {
           return 1.5;
         } else {
@@ -76,14 +76,22 @@ class DeviceHelper {
         }
       case DeviceType.mobileLandscape:
         if (screen == "inv") {
-          return 1.0;
-        } else {
+          return 1.1;
+        } else if (screen == "rep") {
+          return 2.35;
+        } else if (screen == "ord") {
+          return 0.75;
+        }else {
           return 1.2;
         }
       case DeviceType.mobilePortrait:
       default:
         if (screen == "inv") {
-          return 0.75;
+          return 0.80;
+        } else if (screen == "ord") {
+          return 0.525;
+        } else if (screen == "rep") {
+          return 1.5;
         } else {
           return 0.85;
         }
