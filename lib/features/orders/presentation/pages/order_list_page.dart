@@ -13,6 +13,7 @@ import '../../../dashboard/products/presentation/providers/selected_branch_provi
 import '../../../user_management/data/providers/branch_provider.dart';
 import '../../data/models/product_order.dart';
 import '../../data/providers/order_repo_providers.dart';
+import '../widgets/mark_as_paid_dialog.dart';
 import 'order_detail_page.dart';
 
 /// A provider to hold the current order search query.
@@ -282,16 +283,24 @@ class _OrderCardState extends ConsumerState<OrderCard> {
                 onPressed: order.paid || _isLoadingPaid
                     ? null
                     : () async {
-                  setState(() => _isLoadingPaid = true);
-                  try {
-                    await orderRepo.markAsPaid(
-                      branchId: branchId,
-                      orderId: order.id,
-                    );
-                  } catch (e) {
-                    showErrorSnackBar(context, 'Failed to mark as paid');
-                  } finally {
-                    setState(() => _isLoadingPaid = false);
+                  final payment = await showMarkAsPaidDialog(
+                    context: context,
+                    total: order.totalAmount,
+                    discountApplied: order.discountApplied,
+                  );
+
+                  if (payment != null) {
+                    setState(() => _isLoadingPaid = true);
+                    try {
+                      await orderRepo.markAsPaid(
+                        branchId: branchId,
+                        orderId: order.id,
+                      );
+                    } catch (e) {
+                      showErrorSnackBar(context, 'Failed to mark as paid');
+                    } finally {
+                      setState(() => _isLoadingPaid = false);
+                    }
                   }
                 },
                 child: _isLoadingPaid
