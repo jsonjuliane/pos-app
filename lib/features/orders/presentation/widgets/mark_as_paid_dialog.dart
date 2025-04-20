@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 
+import '../../data/models/order_item.dart';
+
 Future<double?> showMarkAsPaidDialog({
   required BuildContext context,
-  required double total,
+  required List<OrderItem> items,
   required bool discountApplied,
 }) async {
   double paymentAmount = 0;
   bool applyDiscount = discountApplied;
   final controller = TextEditingController();
 
+  double getTotal(List<OrderItem> items) {
+    return items.fold(0, (sum, item) => sum + item.price * item.quantity);
+  }
+
+  OrderItem? getCheapestItem(List<OrderItem> items) {
+    if (items.isEmpty) return null;
+    return items.reduce((a, b) => a.price < b.price ? a : b);
+  }
+
   return showDialog<double>(
     context: context,
     builder: (_) {
       return StatefulBuilder(
         builder: (context, setState) {
-          final discountAmount = applyDiscount ? total * 0.12 : 0;
+          final total = getTotal(items);
+
+          final cheapest = getCheapestItem(items);
+          final discountAmount = applyDiscount && cheapest != null
+              ? cheapest.price * 0.12
+              : 0;
+
           final finalTotal = total - discountAmount;
           final change = (paymentAmount - finalTotal).clamp(0, double.infinity);
 
@@ -33,7 +50,7 @@ Future<double?> showMarkAsPaidDialog({
               children: [
                 Wrap(
                   spacing: 8,
-                  runSpacing: 8, // vertical spacing between rows
+                  runSpacing: 8,
                   children: [30, 50, 70, 100, 200, 500].map((amount) {
                     return ChoiceChip(
                       label: Text('₱$amount'),
@@ -60,7 +77,7 @@ Future<double?> showMarkAsPaidDialog({
                   TextSpan(
                     children: [
                       const TextSpan(text: 'Total: '),
-                      if (applyDiscount)
+                      if (applyDiscount && cheapest != null)
                         TextSpan(
                           text: '₱${total.toStringAsFixed(2)} - ₱${discountAmount.toStringAsFixed(2)} = ',
                         ),

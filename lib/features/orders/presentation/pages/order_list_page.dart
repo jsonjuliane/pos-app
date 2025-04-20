@@ -285,7 +285,7 @@ class _OrderCardState extends ConsumerState<OrderCard> {
                     : () async {
                   final payment = await showMarkAsPaidDialog(
                     context: context,
-                    total: order.totalAmount,
+                    items: order.items,
                     discountApplied: order.discountApplied,
                   );
 
