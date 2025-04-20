@@ -12,7 +12,7 @@ class OrderDetailPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     // Calculate order number using hour and minute (12-hour format)
-    final orderNumber = DateFormat('hmm').format(order.createdAt.toLocal());
+    final orderNumber = DateFormat('mmss').format(order.createdAt.toLocal());
 
     return Scaffold(
       appBar: AppBar(
