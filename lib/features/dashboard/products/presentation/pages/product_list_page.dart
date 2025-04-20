@@ -73,22 +73,22 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
       return Center(
         child: ElevatedButton(
           onPressed:
-          branchesAsync.isLoading
-              ? null
-              : () {
-            showDialog(
-              context: context,
-              builder: (_) => const SelectBranchDialog(),
-            );
-          },
+              branchesAsync.isLoading
+                  ? null
+                  : () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const SelectBranchDialog(),
+                    );
+                  },
           child:
-          branchesAsync.isLoading
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-              : const Text('Select Branch'),
+              branchesAsync.isLoading
+                  ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : const Text('Select Branch'),
         ),
       );
     }
@@ -122,15 +122,15 @@ class _ProductListPageState extends ConsumerState<ProductListPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error:
             (err, _) => ErrorMessageWidget(
-          message: mapFirestoreError(err),
-          onRetry: () => ref.refresh(inventoryListProvider),
-        ),
+              message: mapFirestoreError(err),
+              onRetry: () => ref.refresh(inventoryListProvider),
+            ),
         data:
             (products) => _MainContent(
-          scrollController: _scrollController,
-          products: products,
-          cartItems: cartItems,
-        ),
+              scrollController: _scrollController,
+              products: products,
+              cartItems: cartItems,
+            ),
       ),
     );
   }
@@ -154,20 +154,23 @@ class _MainContent extends ConsumerWidget {
 
     // Filter out products based on the selected category
     final filtered =
-    selectedCategory.toLowerCase() == 'all'
-        ? products
-        : products
-        .where(
-          (p) =>
-      p.category.toLowerCase() ==
-          selectedCategory.toLowerCase(),
-    )
-        .toList();
+        (selectedCategory.toLowerCase() == 'all'
+              ? products
+              : products
+                  .where(
+                    (p) =>
+                        p.category.toLowerCase() ==
+                        selectedCategory.toLowerCase(),
+                  )
+                  .toList())
+          ..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
 
     final inStockProducts =
-    filtered.where((p) => p.stockCount > 0 && p.enabled).toList();
+        filtered.where((p) => p.stockCount > 0 && p.enabled).toList();
     final outOfStockProducts =
-    filtered.where((p) => p.stockCount == 0 || !p.enabled).toList();
+        filtered.where((p) => p.stockCount == 0 || !p.enabled).toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -179,72 +182,72 @@ class _MainContent extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           // or EdgeInsets.symmetric(horizontal: 16)
           child:
-          isWide
-              ? Row(
-            children: [
-              Expanded(
-                flex: 7,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // The CategorySelector is inside the same padding
-                    CategorySelector(products: products),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _ProductGrid(
-                        scrollController: scrollController,
-                        inStock: inStockProducts,
-                        outOfStock: outOfStockProducts,
+              isWide
+                  ? Row(
+                    children: [
+                      Expanded(
+                        flex: 7,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // The CategorySelector is inside the same padding
+                            CategorySelector(products: products),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: _ProductGrid(
+                                scrollController: scrollController,
+                                inStock: inStockProducts,
+                                outOfStock: outOfStockProducts,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: OrderSummaryPanel(selectedItems: cartItems),
-              ),
-            ],
-          )
-              : Stack(
-            children: [
-              Column(
-                children: [
-                  CategorySelector(products: products),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: _ProductGrid(
-                      scrollController: scrollController,
-                      inStock: inStockProducts,
-                      outOfStock: outOfStockProducts,
-                    ),
-                  ),
-                ],
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                      Expanded(
+                        flex: 3,
+                        child: OrderSummaryPanel(selectedItems: cartItems),
                       ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          builder: (_) => const _OrderSummarySheet(),
-                        );
-                      },
-                      icon: const Icon(Icons.shopping_cart),
-                      label: const Text('View Cart'),
-                    ),
+                    ],
+                  )
+                  : Stack(
+                    children: [
+                      Column(
+                        children: [
+                          CategorySelector(products: products),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: _ProductGrid(
+                              scrollController: scrollController,
+                              inStock: inStockProducts,
+                              outOfStock: outOfStockProducts,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(50),
+                              ),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  builder: (_) => const _OrderSummarySheet(),
+                                );
+                              },
+                              icon: const Icon(Icons.shopping_cart),
+                              label: const Text('View Cart'),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
