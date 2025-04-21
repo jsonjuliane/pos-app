@@ -126,7 +126,14 @@ class OrderListPage extends ConsumerWidget {
                 .map((doc) => ProductOrder.fromDoc(doc))
                 .toList();
 
-            final ordersByOldest = [...orders]
+            final today = DateTime.now();
+
+            final ordersByTodayOldest = orders
+                .where((o) =>
+            o.createdAt.year == today.year &&
+                o.createdAt.month == today.month &&
+                o.createdAt.day == today.day)
+                .toList()
               ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
             // Retrieve current search query.
@@ -138,7 +145,7 @@ class OrderListPage extends ConsumerWidget {
             orders.where((order) {
               final customerName = order.customerName.toLowerCase();
 
-              final orderIndex = ordersByOldest.indexWhere((o) => o.id == order.id);
+              final orderIndex = ordersByTodayOldest.indexWhere((o) => o.id == order.id);
               final dynamicOrderNumber = (orderIndex + 1).toString().padLeft(3, '0');
 
               return customerName.contains(searchQuery) ||
@@ -183,10 +190,10 @@ class OrderListPage extends ConsumerWidget {
                     children: [
                       _OrderGrid(orders: ongoingOrders,
                           branchId: branchId,
-                          ordersByOldest: ordersByOldest),
+                          ordersByTodayOldest: ordersByTodayOldest),
                       _CompletedOrderWithDateFilter(orders: completedOrders,
                           branchId: branchId,
-                          ordersByOldest: ordersByOldest),
+                          ordersByTodayOldest: ordersByTodayOldest),
                     ],
                   ),
                 ),
@@ -203,10 +210,10 @@ class OrderListPage extends ConsumerWidget {
 class _OrderGrid extends StatelessWidget {
   final List<ProductOrder> orders;
   final String branchId;
-  final List<ProductOrder> ordersByOldest;
+  final List<ProductOrder> ordersByTodayOldest;
 
   const _OrderGrid(
-      {required this.orders, required this.branchId, required this.ordersByOldest});
+      {required this.orders, required this.branchId, required this.ordersByTodayOldest});
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +239,7 @@ class _OrderGrid extends StatelessWidget {
         ),
         itemBuilder: (context, index) {
           final order = orders[index];
-          final orderIndex = ordersByOldest.indexWhere((o) => o.id == order.id);
+          final orderIndex = ordersByTodayOldest.indexWhere((o) => o.id == order.id);
           final orderNumber = (orderIndex + 1).toString().padLeft(3, '0');
 
           return OrderCard(
@@ -249,12 +256,12 @@ class _OrderGrid extends StatelessWidget {
 class _CompletedOrderWithDateFilter extends ConsumerWidget {
   final List<ProductOrder> orders;
   final String branchId;
-  final List<ProductOrder> ordersByOldest;
+  final List<ProductOrder> ordersByTodayOldest;
 
   const _CompletedOrderWithDateFilter({
     required this.orders,
     required this.branchId,
-    required this.ordersByOldest,
+    required this.ordersByTodayOldest,
   });
 
   @override
@@ -318,7 +325,7 @@ class _CompletedOrderWithDateFilter extends ConsumerWidget {
                 final order = filteredOrders[index];
 
                 // 📦 Get dynamic order number from ordersByOldest
-                final orderIndex = ordersByOldest
+                final orderIndex = ordersByTodayOldest
                     .indexWhere((o) => o.id == order.id);
                 final orderNumber =
                 (orderIndex + 1).toString().padLeft(3, '0');
