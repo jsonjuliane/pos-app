@@ -4,15 +4,13 @@ import '../../data/models/product_order.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final ProductOrder order;
+  final String orderNumber;
 
-  const OrderDetailPage({super.key, required this.order});
+  const OrderDetailPage({super.key, required this.order, required this.orderNumber});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    // Calculate order number using hour and minute (12-hour format)
-    final orderNumber = DateFormat('mmss').format(order.createdAt.toLocal());
 
     return Scaffold(
       appBar: AppBar(
