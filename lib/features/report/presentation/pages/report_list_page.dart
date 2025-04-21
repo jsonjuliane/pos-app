@@ -27,18 +27,21 @@ class ReportListPage extends ConsumerStatefulWidget {
 class _ReportListPageState extends ConsumerState<ReportListPage> {
   ReportFilter _selectedFilter = ReportFilter.week;
 
-  /// Computes the threshold DateTime based on the selected filter.
+  /// Computes the threshold DateTime based on the selected filter,
+  /// starting at 00:00:00 of the day.
   DateTime _computeThreshold() {
     final now = DateTime.now();
     switch (_selectedFilter) {
       case ReportFilter.week:
-      // Assuming week starts on Monday.
+      // Start of the week (Monday) at midnight
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        return DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+        return DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day, 0, 0, 0);
       case ReportFilter.month:
-        return DateTime(now.year, now.month, 1);
+      // First day of current month at midnight
+        return DateTime(now.year, now.month, 1, 0, 0, 0);
       case ReportFilter.year:
-        return DateTime(now.year, 1, 1);
+      // January 1st of current year at midnight
+        return DateTime(now.year, 1, 1, 0, 0, 0);
     }
   }
 
@@ -126,17 +129,15 @@ class _ReportListPageState extends ConsumerState<ReportListPage> {
           // Apply time filter to the reports.
           final allReports = snapshot.data!;
           final threshold = _computeThreshold();
-          final filteredReports = allReports.where((report) => report.date.isAfter(threshold)).toList();
+          final filteredReports = allReports.where((report) => report.date.isAtSameMomentAs(threshold) || report.date.isAfter(threshold)).toList();
 
           final deviceType = DeviceHelper.getDeviceType(context);
 
-          return filteredReports.isEmpty
-              ? const Center(child: Text('No reports available'))
-              : Padding(
+          return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Time Filter Choice Chips.
+                // ✅ Time Filter Choice Chips (always shown)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: ReportFilter.values.map((filter) {
@@ -159,8 +160,12 @@ class _ReportListPageState extends ConsumerState<ReportListPage> {
                   }).toList(),
                 ),
                 const SizedBox(height: 16),
+
+                // ✅ Show message or grid based on filtered reports
                 Expanded(
-                  child: GridView.builder(
+                  child: filteredReports.isEmpty
+                      ? const Center(child: Text('No reports available'))
+                      : GridView.builder(
                     itemCount: filteredReports.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, true),
@@ -172,7 +177,6 @@ class _ReportListPageState extends ConsumerState<ReportListPage> {
                       return InventoryReportCard(
                         report: filteredReports[index],
                         onTap: () async {
-                          // Fetch products once.
                           final products = await ref.read(reportRepoProvider).getProductsOnce(branchId: branchId);
                           final productMap = {for (var p in products) p.id: p};
                           Navigator.push(
