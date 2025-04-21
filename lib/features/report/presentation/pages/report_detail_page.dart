@@ -184,11 +184,17 @@ class _ReportDetailPageState extends ConsumerState<ReportDetailPage> {
 
   /// Builds a simple info row for label and value.
   Widget _infoRow(String label, String value) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: Colors.black87))),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.75)),
+            ),
+          ),
           Text(value),
         ],
       ),
@@ -197,6 +203,7 @@ class _ReportDetailPageState extends ConsumerState<ReportDetailPage> {
 
   /// Builds the Inventory Breakdown table filtered by included categories.
   Widget _buildInventoryTable(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     final headers = ['Product', 'Start', 'Add', 'Sold', 'End'];
     final rows = widget.report.startInventory.keys.where((productId) {
       final product = widget.productMap[productId];
@@ -213,16 +220,17 @@ class _ReportDetailPageState extends ConsumerState<ReportDetailPage> {
     }).toList();
 
     return DataTable(
-      headingRowColor: MaterialStateProperty.all(Colors.grey.shade200),
+      headingRowColor: MaterialStateProperty.all(colorScheme.surfaceVariant),
       columns: headers.map((h) => DataColumn(label: Text(h))).toList(),
       rows: rows.map((r) => DataRow(cells: r.map((c) => DataCell(Text(c))).toList())).toList(),
     );
   }
 
-  /// Builds the Itemized Sales table from grouped sales items.
   Widget _buildSalesTable(ThemeData theme, List<Map<String, dynamic>> items, double subtotal, double discount, double total) {
+    final colorScheme = theme.colorScheme;
+
     return DataTable(
-      headingRowColor: MaterialStateProperty.all(Colors.grey.shade200),
+      headingRowColor: MaterialStateProperty.all(colorScheme.surfaceVariant),
       columns: const [
         DataColumn(label: Text('Item')),
         DataColumn(label: Text('Price')),
@@ -241,7 +249,7 @@ class _ReportDetailPageState extends ConsumerState<ReportDetailPage> {
           DataCell(Text('₱${(item['subtotal'] - item['discount']).toStringAsFixed(2)}')),
         ])),
         DataRow(
-          color: MaterialStateProperty.all(Colors.grey.shade100),
+          color: MaterialStateProperty.all(colorScheme.surface),
           cells: [
             DataCell(Text('TOTAL', style: const TextStyle(fontWeight: FontWeight.bold))),
             const DataCell(Text('')),
@@ -257,8 +265,11 @@ class _ReportDetailPageState extends ConsumerState<ReportDetailPage> {
 
   /// Builds a summary row widget for the Sales Summary section.
   Widget _summaryRow(String label, String value, {bool bold = false, bool highlight = false}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      color: highlight ? Colors.grey.shade200 : null,
+      color: highlight ? colorScheme.surfaceVariant : null,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Row(
         children: [
