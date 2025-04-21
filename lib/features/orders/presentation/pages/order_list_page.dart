@@ -13,6 +13,7 @@ import '../../../dashboard/products/presentation/providers/selected_branch_provi
 import '../../../user_management/data/providers/branch_provider.dart';
 import '../../data/models/product_order.dart';
 import '../../data/providers/order_repo_providers.dart';
+import '../provider/complete_date_provider.dart';
 import '../widgets/mark_as_paid_dialog.dart';
 import 'order_detail_page.dart';
 
@@ -175,7 +176,7 @@ class OrderListPage extends ConsumerWidget {
                   child: TabBarView(
                     children: [
                       _OrderGrid(orders: ongoingOrders, branchId: branchId),
-                      _OrderGrid(orders: completedOrders, branchId: branchId),
+                      _CompletedOrderWithDateFilter(orders: completedOrders, branchId: branchId),
                     ],
                   ),
                 ),
@@ -221,6 +222,82 @@ class _OrderGrid extends StatelessWidget {
                   return OrderCard(order: orders[index], branchId: branchId);
                 },
               ),
+    );
+  }
+}
+
+class _CompletedOrderWithDateFilter extends ConsumerWidget {
+  final List<ProductOrder> orders;
+  final String branchId;
+
+  const _CompletedOrderWithDateFilter({
+    required this.orders,
+    required this.branchId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedDate = ref.watch(selectedCompletedDateProvider);
+    final deviceType = DeviceHelper.getDeviceType(context);
+
+    // Filter completed orders by selected date (only same day)
+    final filteredOrders = selectedDate == null
+        ? orders
+        : orders.where((order) {
+      final date = order.updatedAt;
+      return date.year == selectedDate.year &&
+          date.month == selectedDate.month &&
+          date.day == selectedDate.day;
+    }).toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              icon: const Icon(Icons.calendar_today),
+              label: Text(
+                selectedDate == null
+                    ? 'Filter by Date'
+                    : DateFormat('yMMMd').format(selectedDate),
+              ),
+              onPressed: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: selectedDate ?? DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                );
+                if (picked != null) {
+                  ref.read(selectedCompletedDateProvider.notifier).state = picked;
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: filteredOrders.isEmpty
+                ? const Center(child: Text('No orders for selected date.'))
+                : GridView.builder(
+              itemCount: filteredOrders.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: DeviceHelper.getCrossAxisCount(deviceType, true),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: DeviceHelper.getChildAspectRatio(deviceType, "ord"),
+              ),
+              itemBuilder: (context, index) {
+                return OrderCard(
+                  order: filteredOrders[index],
+                  branchId: branchId,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
