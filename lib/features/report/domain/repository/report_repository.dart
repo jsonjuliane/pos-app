@@ -147,7 +147,44 @@ class ReportRepository {
       paymentCollected: paymentCollected,
       totalItemsSold: totalItemsSold,
       items: itemMap.values.toList(),
+      date: date
     );
+  }
+
+  Future<List<SalesSummary>> getSalesSummaries({
+    required String branchId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = DateTime(endDate.year, endDate.month, endDate.day);
+
+    final salesSummaries = <SalesSummary>[];
+
+    DateTime current = start;
+
+    while (!current.isAfter(end)) {
+      final summary = await getSalesSummary(
+        branchId: branchId,
+        date: current,
+      );
+
+      if (summary.grossSales > 0) {
+        salesSummaries.add(SalesSummary(
+          grossSales: summary.grossSales,
+          totalDiscount: summary.totalDiscount,
+          netSales: summary.netSales,
+          paymentCollected: summary.paymentCollected,
+          totalItemsSold: summary.totalItemsSold,
+          items: summary.items,
+          date: current, // add this field if you don't yet (I'll explain below)
+        ));
+      }
+
+      current = current.add(const Duration(days: 1));
+    }
+
+    return salesSummaries;
   }
 
   Future<void> updateStartAndEndInventoryOnOrder({

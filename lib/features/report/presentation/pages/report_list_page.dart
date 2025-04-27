@@ -1,16 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_app/features/auth/presentation/providers/auth_user_providers.dart';
+import 'package:pos_app/features/dashboard/products/presentation/providers/selected_branch_provider.dart';
+import 'package:pos_app/features/inventory/presentation/widgets/inventory_report_card.dart';
 import 'package:pos_app/features/report/data/model/inventory_report.dart';
 import 'package:pos_app/features/report/data/providers/report_repo_providers.dart';
-import 'package:pos_app/features/dashboard/products/presentation/providers/selected_branch_provider.dart';
-import 'package:pos_app/features/auth/presentation/providers/auth_user_providers.dart';
+import 'package:pos_app/features/report/presentation/pages/sales_summary_page.dart';
 import 'package:pos_app/features/user_management/data/providers/branch_provider.dart';
-import 'package:pos_app/shared/widgets/error_message_widget.dart';
-import 'package:pos_app/shared/widgets/select_branch_dialog.dart';
 import 'package:pos_app/shared/utils/device_helper.dart';
 import 'package:pos_app/shared/utils/error_handler.dart';
-import 'package:pos_app/features/inventory/presentation/widgets/inventory_report_card.dart';
+import 'package:pos_app/shared/widgets/error_message_widget.dart';
+import 'package:pos_app/shared/widgets/select_branch_dialog.dart';
+
 import 'report_detail_page.dart';
 
 /// Enum for filtering reports based on time period.
@@ -196,6 +197,41 @@ class _ReportListPageState extends ConsumerState<ReportListPage> {
               ],
             ),
           );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.picture_as_pdf),
+        label: const Text('Sales Summary'),
+        onPressed: () async {
+          final products = await ref.read(reportRepoProvider).getProductsOnce(branchId: branchId);
+          final productMap = {for (var p in products) p.id: p};
+
+          final now = DateTime.now();
+          final firstDayOfMonth = DateTime(now.year, now.month, 1);
+
+          final picked = await showDateRangePicker(
+            context: context,
+            firstDate: DateTime(2023),
+            lastDate: now,
+            initialDateRange: DateTimeRange(
+              start: firstDayOfMonth,
+              end: now,
+            ),
+          );
+
+          if (picked != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SalesSummaryPage(
+                  branchId: branchId,
+                  startDate: picked.start,
+                  endDate: picked.end,
+                  productMap: productMap,
+                ),
+              ),
+            );
+          }
         },
       ),
     );
